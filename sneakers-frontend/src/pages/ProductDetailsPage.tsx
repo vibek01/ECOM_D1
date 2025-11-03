@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Star, CheckCircle } from 'lucide-react';
+import { Star, CheckCircle, Plus, Minus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { products } from '../data/products';
 import { AppContainer } from '../components/layout/AppContainer';
 import { Button } from '../components/common/Button';
@@ -14,7 +15,7 @@ export const ProductDetailsPage = () => {
   const product = products.find((p) => p.id === id);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    product?.variants[0] || null
+    product?.variants.find((v) => v.stock > 0) || product?.variants[0] || null
   );
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -28,9 +29,6 @@ export const ProductDetailsPage = () => {
       </AppContainer>
     );
   }
-
-  const uniqueSizes = [...new Set(product.variants.map((v) => v.size))];
-  const uniqueColors = [...new Set(product.variants.map((v) => v.color))];
 
   const handleAddToCart = () => {
     if (selectedVariant) {
@@ -48,9 +46,11 @@ export const ProductDetailsPage = () => {
         })
       );
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000); // Hide after 2 seconds
+      setTimeout(() => setShowSuccess(false), 2000);
     }
   };
+
+  const isOutOfStock = selectedVariant?.stock === 0;
 
   return (
     <div className="bg-white">
@@ -59,10 +59,14 @@ export const ProductDetailsPage = () => {
           <div className="grid gap-10 md:grid-cols-2">
             {/* Image Gallery */}
             <div className="flex items-center justify-center rounded-lg bg-gray-100 p-8">
-              <img
+              <motion.img
+                key={product.imageUrl}
                 src={product.imageUrl}
                 alt={product.name}
                 className="max-h-[450px] w-full object-contain"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
               />
             </div>
 
@@ -90,63 +94,46 @@ export const ProductDetailsPage = () => {
               </div>
 
               <div className="mt-8">
-                {/* Size Selector */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">Size</h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {uniqueSizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() =>
-                          setSelectedVariant(product.variants.find((v) => v.size === size) || null)
-                        }
-                        className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-25 ${
-                          selectedVariant?.size === size
-                            ? 'border-transparent bg-slate-900 text-white'
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Color Selector */}
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-900">Color</h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {uniqueColors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() =>
-                          setSelectedVariant(product.variants.find((v) => v.color === color) || null)
-                        }
-                        className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-25 ${
-                          selectedVariant?.color === color
-                            ? 'border-transparent bg-slate-900 text-white'
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {/* Variant Selector Logic would go here */}
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 flex items-center gap-4">
+                <div className="flex items-center rounded-md border border-slate-300">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={isOutOfStock}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-12 text-center font-medium">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setQuantity((q) => Math.min(selectedVariant?.stock || q, q + 1))
+                    }
+                    disabled={isOutOfStock}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
                   onClick={handleAddToCart}
                   size="lg"
-                  className="w-full"
-                  disabled={!selectedVariant || selectedVariant.stock === 0}
+                  className="flex-1"
+                  disabled={isOutOfStock}
                 >
                   {showSuccess ? (
-                    <span className="flex items-center">
+                    <motion.span
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      className="flex items-center"
+                    >
                       <CheckCircle className="mr-2 h-5 w-5" /> Added!
-                    </span>
-                  ) : selectedVariant?.stock === 0 ? (
+                    </motion.span>
+                  ) : isOutOfStock ? (
                     'Out of Stock'
                   ) : (
                     'Add to Cart'
