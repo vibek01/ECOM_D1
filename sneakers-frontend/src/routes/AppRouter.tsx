@@ -3,11 +3,9 @@ import { ROUTES } from '../constants';
 import { PageLayout } from '../components/layout/PageLayout';
 
 // --- Import Pages ---
-// We will create these files in the next steps.
-// For now, VS Code will show an error here, which is expected.
 import { HomePage } from '../pages/HomePage';
-// import { ProductListingPage } from '../pages/ProductListingPage';
-// import { ProductDetailsPage } from '../pages/ProductDetailsPage';
+import { ProductListingPage } from '../pages/ProductListingPage';
+import { ProductDetailsPage } from '../pages/ProductDetailsPage'; // <-- Import the new page
 // import { CartPage } from '../pages/CartPage';
 // import { LoginPage } from '../pages/LoginPage';
 // import { NotFoundPage } from '../pages/_404Page';
@@ -19,9 +17,8 @@ export const AppRouter = () => {
         {/* Routes with Header and Footer */}
         <Route element={<PageLayout />}>
           <Route path={ROUTES.HOME} element={<HomePage />} />
-          {/* Uncomment these as you build the pages */}
-          {/* <Route path={ROUTES.PRODUCTS} element={<ProductListingPage />} /> */}
-          {/* <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} /> */}
+          <Route path={ROUTES.PRODUCTS} element={<ProductListingPage />} />
+          <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} /> {/* <-- Add this route */}
           {/* <Route path={ROUTES.CART} element={<CartPage />} /> */}
         </Route>
 

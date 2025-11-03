@@ -1,11 +1,15 @@
 import { NavLink } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // <-- Import useSelector
 import { ShoppingBag, User, Search, Zap } from 'lucide-react';
 import { AppContainer } from './AppContainer';
 import { Button } from '../common/Button';
+import type { RootState } from '../../store/store'; // <-- Import RootState type
 
 export const Header = () => {
-  // Hardcoded for now. Will come from Redux store.
-  const cartItemCount = 2;
+  // Get the real cart item count from the Redux store
+  const cartItemCount = useSelector((state: RootState) =>
+    state.cart.items.reduce((total, item) => total + item.quantity, 0)
+  );
 
   const activeLinkStyle = {
     color: '#020617', // slate-950
@@ -58,7 +62,7 @@ export const Header = () => {
               <Button variant="ghost" size="icon">
                 <ShoppingBag className="h-5 w-5 text-slate-600" />
                 {cartItemCount > 0 && (
-                  <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  <span className="absolute right-0 top-0 flex h-5 w-5 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
                     {cartItemCount}
                   </span>
                 )}
