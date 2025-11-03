@@ -1,8 +1,10 @@
 import { useLayoutEffect, useRef } from 'react';
+import { Link } from 'react-router-dom'; // <-- Import Link
 import { gsap } from 'gsap';
 import { ArrowRight } from 'lucide-react';
 import { AppContainer } from '../layout/AppContainer';
 import { Button } from '../common/Button';
+import { ROUTES } from '../../constants'; // <-- Import ROUTES
 // Make sure to add an image at this path
 import heroImage from '../../assets/images/hero-sneaker.png';
 
@@ -49,9 +51,13 @@ export const HeroSection = () => {
               your feet.
             </p>
             <div className="hero-button mt-8 flex justify-center gap-4 md:justify-start">
-              <Button size="lg">
-                Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              {/* --- MODIFICATION START --- */}
+              <Link to={ROUTES.PRODUCTS}>
+                <Button size="lg">
+                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              {/* --- MODIFICATION END --- */}
             </div>
           </div>
           <div className="hero-image flex items-center justify-center">
