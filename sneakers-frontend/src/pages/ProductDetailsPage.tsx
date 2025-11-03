@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { Star, CheckCircle, Plus, Minus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useDispatch, useSelector } from 'react-redux';
+import { Star, Plus, Minus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { products } from '../data/products';
 import { AppContainer } from '../components/layout/AppContainer';
 import { Button } from '../components/common/Button';
-import { addItem } from '../store/cartSlice';
+import { addItem, incrementQuantity, decrementQuantity } from '../store/cartSlice';
+import type { RootState } from '../store/store';
 import type { ProductVariant } from '../types';
 
 export const ProductDetailsPage = () => {
@@ -17,8 +18,10 @@ export const ProductDetailsPage = () => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     product?.variants.find((v) => v.stock > 0) || product?.variants[0] || null
   );
-  const [quantity, setQuantity] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
+
+  const cartItem = useSelector((state: RootState) =>
+    state.cart.items.find((item) => item.id === selectedVariant?.id)
+  );
 
   if (!product) {
     return (
@@ -41,12 +44,10 @@ export const ProductDetailsPage = () => {
           imageUrl: product.imageUrl,
           size: selectedVariant.size,
           color: selectedVariant.color,
-          quantity: quantity,
+          quantity: 1, // Always add 1 initially
           stock: selectedVariant.stock,
         })
       );
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
     }
   };
 
@@ -93,52 +94,60 @@ export const ProductDetailsPage = () => {
                 <p className="text-base text-slate-700">{product.description}</p>
               </div>
 
-              <div className="mt-8">
-                {/* Variant Selector Logic would go here */}
-              </div>
+              {/* Variant selectors would go here */}
 
-              <div className="mt-8 flex items-center gap-4">
-                <div className="flex items-center rounded-md border border-slate-300">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={isOutOfStock}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setQuantity((q) => Math.min(selectedVariant?.stock || q, q + 1))
-                    }
-                    disabled={isOutOfStock}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button
-                  onClick={handleAddToCart}
-                  size="lg"
-                  className="flex-1"
-                  disabled={isOutOfStock}
-                >
-                  {showSuccess ? (
-                    <motion.span
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      className="flex items-center"
+              <div className="mt-8">
+                <AnimatePresence mode="wait">
+                  {cartItem ? (
+                    <motion.div
+                      key="quantityControl"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex h-11 w-full items-center justify-between rounded-md border border-slate-300 px-2"
                     >
-                      <CheckCircle className="mr-2 h-5 w-5" /> Added!
-                    </motion.span>
-                  ) : isOutOfStock ? (
-                    'Out of Stock'
+                      <span className="font-semibold">Quantity</span>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => dispatch(decrementQuantity(cartItem.id))}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-10 text-center font-medium">{cartItem.quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => dispatch(incrementQuantity(cartItem.id))}
+                          aria-label="Increase quantity"
+                          disabled={cartItem.quantity >= cartItem.stock}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </motion.div>
                   ) : (
-                    'Add to Cart'
+                    <motion.div
+                      key="addToCartButton"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Button
+                        onClick={handleAddToCart}
+                        size="lg"
+                        className="w-full"
+                        disabled={isOutOfStock}
+                      >
+                        {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                      </Button>
+                    </motion.div>
                   )}
-                </Button>
+                </AnimatePresence>
               </div>
             </div>
           </div>

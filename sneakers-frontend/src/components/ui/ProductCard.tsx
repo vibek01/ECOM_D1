@@ -14,12 +14,11 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   const dispatch = useDispatch();
   const cartItem = useSelector((state: RootState) =>
-    // Find the first item in the cart that matches this product's ID
     state.cart.items.find((item) => item.productId === product.id)
   );
 
-  const handleAddToCart = () => {
-    // Add the first available variant as a default
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent redirection
     const defaultVariant = product.variants.find((v) => v.stock > 0);
     if (defaultVariant) {
       dispatch(
@@ -36,8 +35,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         })
       );
     } else {
-      // Handle case where all variants are out of stock
       alert('This product is currently out of stock.');
+    }
+  };
+
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent redirection
+    if (cartItem) {
+      dispatch(incrementQuantity(cartItem.id));
+    }
+  };
+
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent redirection
+    if (cartItem) {
+      dispatch(decrementQuantity(cartItem.id));
     }
   };
 
@@ -47,20 +59,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       transition={{ duration: 0.2 }}
       className="group relative flex flex-col"
     >
-      <Link to={`/product/${product.id}`}>
+      <Link to={`/product/${product.id}`} className="block">
         <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-100">
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="h-full w-full object-cover object-center group-hover:opacity-75"
+            className="h-full w-full object-cover object-center transition-opacity group-hover:opacity-75"
           />
         </div>
         <div className="mt-4 flex justify-between">
           <div>
-            <h3 className="text-sm text-gray-700">
-              <span aria-hidden="true" className="absolute inset-0" />
-              {product.name}
-            </h3>
+            <h3 className="text-sm text-gray-700">{product.name}</h3>
           </div>
           <p className="text-sm font-medium text-gray-900">${product.price.toFixed(2)}</p>
         </div>
@@ -79,7 +88,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => dispatch(decrementQuantity(cartItem.id))}
+                onClick={handleDecrement}
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" />
@@ -88,7 +97,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => dispatch(incrementQuantity(cartItem.id))}
+                onClick={handleIncrement}
                 aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" />
@@ -105,7 +114,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <Button
                 variant="secondary"
                 onClick={handleAddToCart}
-                className="w-full relative z-10"
+                className="w-full"
               >
                 Add to Cart
               </Button>

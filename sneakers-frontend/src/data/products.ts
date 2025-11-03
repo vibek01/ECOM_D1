@@ -7,7 +7,7 @@ export const products: Product[] = [
     brand: 'Nike',
     price: 150.0,
     // Corrected URL
-    imageUrl: 'https://static.nike.com/a/images/t_PDP_864_v1/f_auto,b_rgb:f5f5f5/38833466-b719-46a7-8519-47a4b54303f0/air-max-pulse-shoes-SQhX2h.png',
+    imageUrl: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/950337b8-c990-4395-a24f-ea6d82f3060b/air-max-pulse-shoes-SQhX2h.png',
     description:
       'The Air Max Pulse pulls inspiration from the London music scene, bringing an underground touch to the iconic Air Max line. Its textile-wrapped midsole and vacuum-sealed accents keep ‘em looking fresh and clean, while colors inspired by the London music scene give your look the edge.',
     variants: [
@@ -80,7 +80,7 @@ export const products: Product[] = [
     brand: 'Adidas',
     price: 100.0,
     // Corrected URL
-    imageUrl: 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/b75806_01_standard/Samba_OG_Shoes_White_B75806_01_standard.jpg',
+    imageUrl: 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/73347052ce434f6397d4af620124399d_9366/Samba_OG_Shoes_White_B75806_01_standard.jpg',
     description:
       'An authentic Samba shoe, this sneaker stays true to its legacy with a tasteful, low-profile, soft leather upper, suede overlays and gum sole, making it a staple in everyone’s closet - on and off the pitch.',
     variants: [
