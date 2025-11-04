@@ -10,6 +10,7 @@ import { CartPage } from '../pages/CartPage';
 import { LoginPage } from '../pages/LoginPage'; // <-- Import
 import { RegisterPage } from '../pages/RegisterPage'; // <-- Import
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'; // <-- Import
+import { ProfilePage } from '../pages/ProfilePage'; // <-- Import a new placeholder page
 
 // --- Import Route Protectors ---
 import { PrivateRoute } from './PrivateRoute';
@@ -25,6 +26,10 @@ export const AppRouter = () => {
           <Route path={ROUTES.PRODUCTS} element={<ProductListingPage />} />
           <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} />
           <Route path={ROUTES.CART} element={<CartPage />} />
+
+          <Route element={<PrivateRoute />}>
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
 
           {/* Protected Admin Routes */}
           <Route element={<AdminRoute />}>

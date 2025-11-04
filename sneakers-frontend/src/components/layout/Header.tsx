@@ -31,8 +31,29 @@ export const Header = () => {
               <Zap className="h-6 w-6 text-slate-900" />
               <span className="text-lg font-bold tracking-tight">Sneakers</span>
             </NavLink>
+            {/* FIX: Re-added the nav links that use the activeLinkStyle variable */}
             <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-              {/* ... nav links ... */}
+              <NavLink
+                to="/products"
+                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                className="transition-colors hover:text-slate-950"
+              >
+                All Sneakers
+              </NavLink>
+              <NavLink
+                to="/new-releases"
+                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                className="transition-colors hover:text-slate-950"
+              >
+                New Releases
+              </NavLink>
+              <NavLink
+                to="/sale"
+                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                className="transition-colors hover:text-slate-950"
+              >
+                Sale
+              </NavLink>
             </nav>
           </div>
 
