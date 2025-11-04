@@ -5,8 +5,8 @@ import { PageLayout } from '../components/layout/PageLayout';
 // --- Import Pages ---
 import { HomePage } from '../pages/HomePage';
 import { ProductListingPage } from '../pages/ProductListingPage';
-import { ProductDetailsPage } from '../pages/ProductDetailsPage'; // <-- Import the new page
-// import { CartPage } from '../pages/CartPage';
+import { ProductDetailsPage } from '../pages/ProductDetailsPage';
+import { CartPage } from '../pages/CartPage'; // <-- Import the new page
 // import { LoginPage } from '../pages/LoginPage';
 // import { NotFoundPage } from '../pages/_404Page';
 
@@ -18,8 +18,8 @@ export const AppRouter = () => {
         <Route element={<PageLayout />}>
           <Route path={ROUTES.HOME} element={<HomePage />} />
           <Route path={ROUTES.PRODUCTS} element={<ProductListingPage />} />
-          <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} /> {/* <-- Add this route */}
-          {/* <Route path={ROUTES.CART} element={<CartPage />} /> */}
+          <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} />
+          <Route path={ROUTES.CART} element={<CartPage />} /> {/* <-- Add this route */}
         </Route>
 
         {/* Full-page routes without standard layout (e.g., Login) */}

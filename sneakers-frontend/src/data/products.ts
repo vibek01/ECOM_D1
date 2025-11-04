@@ -21,9 +21,10 @@ export const products: Product[] = [
     name: 'Adidas Ultraboost 1.0',
     brand: 'Adidas',
     price: 180.0,
-    imageUrl: 'https://images.stockx.com/images/adidas-Ultra-Boost-1-0-Cream-2018-Product.jpg?fit=fill&bg=FFFFFF&w=700&h=500&fm=webp&auto=compress&q=90&dpr=2&trim=color&updated_at=1607042833',
+    // Corrected URL
+    imageUrl: 'https://images.stockx.com/images/adidas-Ultra-Boost-1-0-Core-White-Product.jpg?fit=fill&bg=FFFFFF&w=700&h=500&fm=webp&auto=compress&q=90&dpr=2&trim=color&updated_at=1607042833',
     description:
-      'From a walk in the park to a weekend run with friends, these adidas Ultraboost 1.0 shoes are designed for comfort. An adidas PRIMEKNIT upper gently hugs your feet, while BOOST on the midsole cushions from the first step to the last mile.',
+      'From a walk in the park to a weekend run with friends, these adidas Ultraboaboost 1.0 shoes are designed for comfort. An adidas PRIMEKNIT upper gently hugs your feet, while BOOST on the midsole cushions from the first step to the last mile.',
     variants: [
       { id: '2-s9-c-white', size: '9', color: 'Cloud White', stock: 12 },
       { id: '2-s10-c-white', size: '10', color: 'Cloud White', stock: 15 },
@@ -50,7 +51,8 @@ export const products: Product[] = [
     name: 'Puma Suede Classic',
     brand: 'Puma',
     price: 70.0,
-    imageUrl: 'https://images.stockx.com/images/Puma-Suede-Classic-Black-White-Product.jpg?fit=fill&bg=FFFFFF&w=700&h=500&fm=webp&auto=compress&q=90&dpr=2&trim=color&updated_at=1607047338',
+    // Corrected URL
+    imageUrl: 'https://images.stockx.com/images/Puma-Suede-Classic-XXI-Black-Product.jpg?fit=fill&bg=FFFFFF&w=700&h=500&fm=webp&auto=compress&q=90&dpr=2&trim=color&updated_at=1611181190',
     description:
       'The Suede Classic XXI features a full suede upper and some modern touches for an improved overall quality and feel to an all-time great.',
     variants: [
@@ -108,7 +110,7 @@ export const products: Product[] = [
     price: 85.0,
     imageUrl: 'https://images.stockx.com/images/Puma-Clyde-OG-For-All-Time-Red-Product.jpg?fit=fill&bg=FFFFFF&w=700&h=500&fm=webp&auto=compress&q=90&dpr=2&trim=color&updated_at=1667547841',
     description:
-      'The Clyde OG is a true icon from the PUMA archive. Just like its namesake, Walt "Clyde" Frazier, the Clyde OG embodies fashion, culture, and basketball heritage with confidence and flair.',
+      'The Clyde OG is a true icon from the PUMA archive. Just. Just like its namesake, Walt "Clyde" Frazier, the Clyde OG embodies fashion, culture, and basketball heritage with confidence and flair.',
     variants: [
       { id: '8-s9-c-blue', size: '9', color: 'Blue', stock: 8 },
       { id: '8-s10-c-blue', size: '10', color: 'Blue', stock: 8 },
