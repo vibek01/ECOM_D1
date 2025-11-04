@@ -1,17 +1,10 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+// FIX: Added 'type' keyword for PayloadAction
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import apiPrivate, { apiPublic } from '../api/axios';
-import type { User } from '../types'; // Assuming you'll add a User type
-
-// Define a type for the user data you expect from the API
-interface AuthUser {
-  _id: string;
-  username: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
-}
+import type { User } from '../types'; // FIX: Now correctly imports the User type
 
 interface AuthState {
-  user: AuthUser | null;
+  user: User | null;
   accessToken: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
@@ -24,7 +17,7 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Async Thunks for API calls
+// --- (No changes to async thunks) ---
 export const loginUser = createAsyncThunk('auth/loginUser', async (credentials: any, { rejectWithValue }) => {
   try {
     const response = await apiPublic.post('/auth/login', credentials);
@@ -44,10 +37,10 @@ export const registerUser = createAsyncThunk('auth/registerUser', async (userDat
 });
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
-  // We call the backend to invalidate the refresh token
   await apiPrivate.post('/auth/logout');
   return;
 });
+
 
 const authSlice = createSlice({
   name: 'auth',
@@ -64,7 +57,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Login
       .addCase(loginUser.pending, (state) => {
         state.status = 'loading';
       })
@@ -78,19 +70,17 @@ const authSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       })
-      // Register
       .addCase(registerUser.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(registerUser.fulfilled, (state) => {
-        state.status = 'succeeded'; // Or redirect, etc.
+        state.status = 'succeeded';
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
       })
-      // Logout
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.accessToken = null;

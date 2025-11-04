@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
-import { LoginSchema, TLoginSchema } from '../lib/validators';
+import { LoginSchema, type TLoginSchema } from '../lib/validators';
 import { loginUser } from '../store/authSlice';
 import type { AppDispatch, RootState } from '../store/store';
 import { Button } from '../components/common/Button';

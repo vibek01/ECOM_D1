@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { RegisterSchema, TRegisterSchema } from '../lib/validators';
+import { RegisterSchema, type TRegisterSchema } from '../lib/validators';
 import { registerUser } from '../store/authSlice';
 import type { AppDispatch, RootState } from '../store/store';
 import { Button } from '../components/common/Button';

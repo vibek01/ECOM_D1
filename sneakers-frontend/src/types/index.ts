@@ -30,3 +30,12 @@ export interface CartItem {
   quantity: number;
   stock: number; // Available stock for this specific variant
 }
+
+// --- ADD THIS NEW TYPE ---
+// Represents the authenticated user.
+export interface User {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+}
