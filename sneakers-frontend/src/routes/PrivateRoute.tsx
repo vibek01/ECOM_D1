@@ -1,13 +1,16 @@
-import type { ReactNode } from 'react';
+import { useSelector } from 'react-redux';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import type { RootState } from '../store/store';
 
-interface PrivateRouteProps {
-  children: ReactNode;
-}
+export const PrivateRoute = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
 
-// For now, this component just renders its children.
-// Later, we will add logic to check for authentication.
-export const PrivateRoute = ({ children }: PrivateRouteProps) => {
-  const isAuthenticated = true; // Placeholder
+  if (!user) {
+    // Redirect them to the /login page, but save the current location they were
+    // trying to go to. This allows us to send them back after they log in.
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  return isAuthenticated ? <>{children}</> : <div>Redirecting to login...</div>;
+  return <Outlet />; // Render the child route (e.g., ProfilePage)
 };

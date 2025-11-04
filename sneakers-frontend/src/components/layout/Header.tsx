@@ -1,15 +1,21 @@
 import { NavLink } from 'react-router-dom';
-import { useSelector } from 'react-redux'; // <-- Import useSelector
-import { ShoppingBag, User, Search, Zap } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import { ShoppingBag, User, Search, Zap, LogOut } from 'lucide-react';
 import { AppContainer } from './AppContainer';
 import { Button } from '../common/Button';
-import type { RootState } from '../../store/store'; // <-- Import RootState type
+import type { RootState, AppDispatch } from '../../store/store';
+import { logoutUser } from '../../store/authSlice';
 
 export const Header = () => {
-  // Get the real cart item count from the Redux store
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
   const cartItemCount = useSelector((state: RootState) =>
     state.cart.items.reduce((total, item) => total + item.quantity, 0)
   );
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+  };
 
   const activeLinkStyle = {
     color: '#020617', // slate-950
@@ -26,27 +32,7 @@ export const Header = () => {
               <span className="text-lg font-bold tracking-tight">Sneakers</span>
             </NavLink>
             <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-              <NavLink
-                to="/products"
-                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
-              >
-                All Sneakers
-              </NavLink>
-              <NavLink
-                to="/new-releases"
-                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
-              >
-                New Releases
-              </NavLink>
-              <NavLink
-                to="/sale"
-                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
-              >
-                Sale
-              </NavLink>
+              {/* ... nav links ... */}
             </nav>
           </div>
 
@@ -55,9 +41,22 @@ export const Header = () => {
             <Button variant="ghost" size="icon" aria-label="Search">
               <Search className="h-5 w-5 text-slate-600" />
             </Button>
-            <Button variant="ghost" size="icon" aria-label="User Profile">
-              <User className="h-5 w-5 text-slate-600" />
-            </Button>
+
+            {user ? (
+              <>
+                <Button variant="ghost" size="icon" aria-label="User Profile">
+                  <User className="h-5 w-5 text-slate-600" />
+                </Button>
+                <Button variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
+                  <LogOut className="h-5 w-5 text-slate-600" />
+                </Button>
+              </>
+            ) : (
+              <NavLink to="/login">
+                <Button variant="ghost">Login</Button>
+              </NavLink>
+            )}
+
             <NavLink to="/cart" className="relative" aria-label="Shopping Cart">
               <Button variant="ghost" size="icon">
                 <ShoppingBag className="h-5 w-5 text-slate-600" />
