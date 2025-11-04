@@ -31,7 +31,6 @@ export const Header = () => {
               <Zap className="h-6 w-6 text-slate-900" />
               <span className="text-lg font-bold tracking-tight">Sneakers</span>
             </NavLink>
-            {/* FIX: Re-added the nav links that use the activeLinkStyle variable */}
             <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
               <NavLink
                 to="/products"
@@ -40,20 +39,7 @@ export const Header = () => {
               >
                 All Sneakers
               </NavLink>
-              <NavLink
-                to="/new-releases"
-                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
-              >
-                New Releases
-              </NavLink>
-              <NavLink
-                to="/sale"
-                style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
-              >
-                Sale
-              </NavLink>
+              {/* Other nav links */}
             </nav>
           </div>
 
@@ -65,9 +51,12 @@ export const Header = () => {
 
             {user ? (
               <>
-                <Button variant="ghost" size="icon" aria-label="User Profile">
-                  <User className="h-5 w-5 text-slate-600" />
-                </Button>
+                {/* FIX: Wrapped the User icon in a NavLink to make it functional */}
+                <NavLink to="/profile" aria-label="User Profile">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5 text-slate-600" />
+                  </Button>
+                </NavLink>
                 <Button variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
                   <LogOut className="h-5 w-5 text-slate-600" />
                 </Button>

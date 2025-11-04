@@ -1,23 +1,34 @@
-// FIX: Added 'type' keyword for PayloadAction
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import apiPrivate, { apiPublic } from '../api/axios';
-import type { User } from '../types'; // FIX: Now correctly imports the User type
+import type { User } from '../types';
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  // FIX: Added authStatus to track the initial session check
+  authStatus: 'initializing' | 'authenticated' | 'unauthenticated';
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   accessToken: null,
-  status: 'idle',
+  authStatus: 'initializing', // Start in an initializing state
   error: null,
 };
 
-// --- (No changes to async thunks) ---
+// FIX: New async thunk to verify auth status on app load
+export const verifyAuth = createAsyncThunk('auth/verifyAuth', async (_, { rejectWithValue }) => {
+  try {
+    // The refresh-token endpoint is perfect for this. It uses the secure cookie
+    // to get a new access token and user data if the session is still valid.
+    const response = await apiPublic.post('/auth/refresh-token', {}, { withCredentials: true });
+    return response.data.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Session expired');
+  }
+});
+
 export const loginUser = createAsyncThunk('auth/loginUser', async (credentials: any, { rejectWithValue }) => {
   try {
     const response = await apiPublic.post('/auth/login', credentials);
@@ -41,7 +52,6 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   return;
 });
 
-
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -52,39 +62,39 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
-      state.status = 'idle';
+      state.authStatus = 'unauthenticated';
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.pending, (state) => {
-        state.status = 'loading';
+      // Verify Auth
+      .addCase(verifyAuth.pending, (state) => {
+        state.authStatus = 'initializing';
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+      .addCase(verifyAuth.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        state.authStatus = 'authenticated';
+      })
+      .addCase(verifyAuth.rejected, (state) => {
+        state.authStatus = 'unauthenticated';
+      })
+      // Login
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
+        state.authStatus = 'authenticated';
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.status = 'failed';
+        state.authStatus = 'unauthenticated';
         state.error = action.payload as string;
       })
-      .addCase(registerUser.pending, (state) => {
-        state.status = 'loading';
-      })
-      .addCase(registerUser.fulfilled, (state) => {
-        state.status = 'succeeded';
-        state.error = null;
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload as string;
-      })
+      // Logout
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.accessToken = null;
-        state.status = 'idle';
+        state.authStatus = 'unauthenticated';
       });
   },
 });

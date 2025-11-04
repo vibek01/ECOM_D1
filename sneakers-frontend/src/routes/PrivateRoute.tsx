@@ -1,16 +1,22 @@
 import { useSelector } from 'react-redux';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import type { RootState } from '../store/store';
+import { FullScreenSpinner } from '../components/common/FullScreenSpinner';
 
 export const PrivateRoute = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, authStatus } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
 
-  if (!user) {
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to. This allows us to send them back after they log in.
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Show a loading spinner while the initial authentication check is running
+  if (authStatus === 'initializing') {
+    return <FullScreenSpinner />;
   }
 
-  return <Outlet />; // Render the child route (e.g., ProfilePage)
+  // If the check is complete and there is a user, render the requested page
+  if (user) {
+    return <Outlet />;
+  }
+
+  // If the check is complete and there's no user, redirect to login
+  return <Navigate to="/login" state={{ from: location }} replace />;
 };
