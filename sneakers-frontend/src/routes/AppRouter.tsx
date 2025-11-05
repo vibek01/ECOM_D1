@@ -11,8 +11,9 @@ import { CartPage } from '../pages/CartPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
-import { ProductManagementPage } from '../pages/admin/ProductManagementPage'; // <-- Import
-import { AddProductPage } from '../pages/admin/AddProductPage'; // <-- Import
+import { ProductManagementPage } from '../pages/admin/ProductManagementPage';
+import { AddProductPage } from '../pages/admin/AddProductPage';
+import { EditProductPage } from '../pages/admin/EditProductPage'; // <-- Import
 import { ProfilePage } from '../pages/ProfilePage';
 
 // --- Import Route Protectors ---
@@ -38,8 +39,9 @@ export const AppRouter = () => {
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/products" element={<ProductManagementPage />} /> {/* <-- Add */}
-            <Route path="/admin/products/add" element={<AddProductPage />} /> {/* <-- Add */}
+            <Route path="/admin/products" element={<ProductManagementPage />} />
+            <Route path="/admin/products/add" element={<AddProductPage />} />
+            <Route path="/admin/products/edit/:id" element={<EditProductPage />} /> {/* <-- Add */}
           </Route>
         </Route>
 

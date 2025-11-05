@@ -1,4 +1,4 @@
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../common/Button';
@@ -6,27 +6,28 @@ import { Input } from '../common/Input';
 import { Spinner } from '../common/Spinner';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
-// Zod schema for validation
+// FIX: Using z.coerce is the correct, modern way to handle string-to-number
+// conversions from form inputs, which resolves the complex resolver type errors.
 const VariantSchema = z.object({
   size: z.string().min(1, 'Size is required'),
   color: z.string().min(1, 'Color is required'),
-  stock: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().min(0, 'Stock cannot be negative')),
+  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
 });
 
 export const ProductFormSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   brand: z.string().min(2, 'Brand is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  price: z.preprocess((a) => parseFloat(z.string().parse(a)), z.number().min(0, 'Price must be positive')),
-  image: z.any().optional(), // We'll handle file validation separately
+  price: z.coerce.number().min(0, 'Price must be positive'),
+  image: z.any().optional(),
   variants: z.array(VariantSchema).min(1, 'At least one variant is required'),
 });
 
 export type TProductFormSchema = z.infer<typeof ProductFormSchema>;
 
 interface ProductFormProps {
-  onSubmit: (data: TProductFormSchema, formData: FormData) => void;
-  initialData?: TProductFormSchema;
+  onSubmit: (formData: FormData) => void;
+  initialData?: Partial<TProductFormSchema>;
   isLoading: boolean;
   submitButtonText?: string;
 }
@@ -35,7 +36,7 @@ export const ProductForm = ({
   onSubmit,
   initialData,
   isLoading,
-  submitButtonText = 'Create Product',
+  submitButtonText = 'Submit',
 }: ProductFormProps) => {
   const {
     register,
@@ -54,7 +55,9 @@ export const ProductForm = ({
     name: 'variants',
   });
 
-  const handleFormSubmit = (data: TProductFormSchema) => {
+  // FIX: Explicitly typing the handler with SubmitHandler<TProductFormSchema>
+  // ensures it perfectly matches the type expected by react-hook-form's handleSubmit.
+  const handleFormSubmit: SubmitHandler<TProductFormSchema> = (data) => {
     const formData = new FormData();
     formData.append('name', data.name);
     formData.append('brand', data.brand);
@@ -64,7 +67,7 @@ export const ProductForm = ({
     if (data.image && data.image[0]) {
       formData.append('image', data.image[0]);
     }
-    onSubmit(data, formData);
+    onSubmit(formData);
   };
 
   return (
@@ -99,9 +102,11 @@ export const ProductForm = ({
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
         </div>
         <div>
-          <label htmlFor="image" className="block text-sm font-medium text-gray-700">Product Image</label>
+          <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+            Product Image {initialData ? '(Leave blank to keep existing image)' : ''}
+          </label>
           <Input id="image" type="file" {...register('image')} className="mt-1" />
-          {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image.message}</p>}
+          {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image.message as string}</p>}
         </div>
       </div>
 
@@ -116,17 +121,17 @@ export const ProductForm = ({
                 <div>
                   <label className="text-xs font-medium">Size</label>
                   <Input {...register(`variants.${index}.size`)} />
-                  {errors.variants?.[index]?.size && <p className="text-xs text-red-600">{errors.variants[index].size.message}</p>}
+                  {errors.variants?.[index]?.size && <p className="text-xs text-red-600">{errors.variants?.[index]?.size?.message}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium">Color</label>
                   <Input {...register(`variants.${index}.color`)} />
-                  {errors.variants?.[index]?.color && <p className="text-xs text-red-600">{errors.variants[index].color.message}</p>}
+                  {errors.variants?.[index]?.color && <p className="text-xs text-red-600">{errors.variants?.[index]?.color?.message}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium">Stock</label>
                   <Input type="number" {...register(`variants.${index}.stock`)} />
-                  {errors.variants?.[index]?.stock && <p className="text-xs text-red-600">{errors.variants[index].stock.message}</p>}
+                  {errors.variants?.[index]?.stock && <p className="text-xs text-red-600">{errors.variants?.[index]?.stock?.message}</p>}
                 </div>
               </div>
               <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="mt-5">
