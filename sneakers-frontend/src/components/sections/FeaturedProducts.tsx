@@ -1,40 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppContainer } from '../layout/AppContainer';
 import { ProductCard } from '../ui/ProductCard';
-import { apiPublic } from '../../api/axios'; // <-- Import the public API instance
-import type { Product } from '../../types';
+import { fetchProducts } from '../../store/ProductSlice';
+import type { AppDispatch, RootState } from '../../store/store';
 
 interface FeaturedProductsProps {
   title: string;
 }
 
 export const FeaturedProducts = ({ title }: FeaturedProductsProps) => {
-  // State to hold products, loading status, and any potential errors
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { products, status } = useSelector((state: RootState) => state.products);
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await apiPublic.get('/products');
-        // Take the first 4 products as "featured"
-        const featured = response.data.data.slice(0, 4);
-        setProducts(featured);
-      } catch (err) {
-        // In case of an error, we can just show an empty section
-        console.error('Failed to fetch featured products:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeaturedProducts();
-  }, []);
+    // Only fetch products if they haven't been fetched already
+    if (status === 'idle') {
+      dispatch(fetchProducts());
+    }
+  }, [status, dispatch]);
 
-  // If loading or there are no products, we can choose to render nothing
-  // to avoid empty space or spinners on the homepage.
-  if (loading || products.length === 0) {
-    // You could return a skeleton loader here for a better UX
+  // Get the first 4 products for the feature section
+  const featuredProducts = products.slice(0, 4);
+
+  if (status === 'loading' && featuredProducts.length === 0) {
+    // Optional: render a skeleton loader here
+    return null;
+  }
+
+  if (featuredProducts.length === 0) {
     return null;
   }
 
@@ -43,7 +37,7 @@ export const FeaturedProducts = ({ title }: FeaturedProductsProps) => {
       <AppContainer>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h2>
         <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-          {products.map((product) => (
+          {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
