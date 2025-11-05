@@ -10,6 +10,7 @@ import { fetchProductById } from '../store/ProductSlice';
 import type { AppDispatch, RootState } from '../store/store';
 import type { ProductVariant } from '../types';
 import { Spinner } from '../components/common/Spinner';
+import { VariantSelector } from '../components/ui/VariantSelector'; // <-- UPGRADE: Import the selector
 
 export const ProductDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,11 +26,13 @@ export const ProductDetailsPage = () => {
 
   useEffect(() => {
     if (product?.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants.find(v => v.stock > 0) || product.variants[0]);
+      // Default to the first variant that is in stock, or the very first variant if all are out of stock.
+      const defaultVariant = product.variants.find(v => v.stock > 0) || product.variants[0];
+      setSelectedVariant(defaultVariant);
     }
   }, [product]);
 
-  // --- FIX: Use a composite ID for checking the cart ---
+  // This logic is now robust. It recalculates whenever the selectedVariant changes.
   const compositeId = product && selectedVariant ? `${product.id}-${selectedVariant.id}` : null;
 
   const cartItem = useSelector((state: RootState) =>
@@ -39,7 +42,7 @@ export const ProductDetailsPage = () => {
   const handleAddToCart = () => {
     if (product && selectedVariant && compositeId) {
       dispatch(addItem({
-        id: compositeId, // <-- Use the unique composite ID
+        id: compositeId,
         productId: product.id,
         name: product.name,
         price: product.price,
@@ -52,17 +55,8 @@ export const ProductDetailsPage = () => {
     }
   };
 
-  const handleIncrement = () => {
-    if (cartItem) {
-      dispatch(incrementQuantity(cartItem.id)); // cartItem.id is already the composite ID
-    }
-  };
-
-  const handleDecrement = () => {
-    if (cartItem) {
-      dispatch(decrementQuantity(cartItem.id)); // cartItem.id is already the composite ID
-    }
-  };
+  const handleIncrement = () => cartItem && dispatch(incrementQuantity(cartItem.id));
+  const handleDecrement = () => cartItem && dispatch(decrementQuantity(cartItem.id));
 
   if (status === 'loading' || !product) {
     return <div className="flex h-[60vh] items-center justify-center"><Spinner size="lg" /></div>;
@@ -85,7 +79,6 @@ export const ProductDetailsPage = () => {
       <AppContainer>
         <div className="py-12">
           <div className="grid gap-10 md:grid-cols-2">
-            {/* Product Image Section (No changes needed) */}
             <div className="flex items-center justify-center rounded-lg bg-gray-100 p-8">
               <motion.img
                 key={product.imageUrl}
@@ -97,7 +90,6 @@ export const ProductDetailsPage = () => {
                 transition={{ duration: 0.5 }}
               />
             </div>
-            {/* Product Details Section */}
             <div>
               <p className="font-semibold uppercase tracking-wider text-slate-500">{product.brand}</p>
               <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{product.name}</h1>
@@ -109,10 +101,27 @@ export const ProductDetailsPage = () => {
                 </div>
               </div>
               <div className="mt-6"><p className="text-base text-slate-700">{product.description}</p></div>
+
+              {/* --- UPGRADE: Add Variant Selectors --- */}
+              <div className="mt-8 space-y-6">
+                <VariantSelector
+                  variants={product.variants}
+                  selectedVariant={selectedVariant}
+                  onVariantSelect={setSelectedVariant}
+                  type="size"
+                />
+                <VariantSelector
+                  variants={product.variants}
+                  selectedVariant={selectedVariant}
+                  onVariantSelect={setSelectedVariant}
+                  type="color"
+                />
+              </div>
+
               <div className="mt-8">
                 <AnimatePresence mode="wait">
                   {cartItem ? (
-                    <motion.div key="quantityControl" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="flex h-11 w-full items-center justify-between rounded-md border border-slate-300 px-2">
+                    <motion.div key="quantityControl" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="flex h-12 w-full items-center justify-between rounded-md border border-slate-300 px-3">
                       <span className="font-semibold">Quantity</span>
                       <div className="flex items-center">
                         <Button variant="ghost" size="icon" onClick={handleDecrement} aria-label="Decrease quantity"><Minus className="h-4 w-4" /></Button>
@@ -122,7 +131,9 @@ export const ProductDetailsPage = () => {
                     </motion.div>
                   ) : (
                     <motion.div key="addToCartButton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                      <Button onClick={handleAddToCart} size="lg" className="w-full" disabled={isOutOfStock}>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</Button>
+                      <Button onClick={handleAddToCart} size="lg" className="w-full" disabled={!selectedVariant || isOutOfStock}>
+                        {!selectedVariant ? 'Select a Variant' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                      </Button>
                     </motion.div>
                   )}
                 </AnimatePresence>
