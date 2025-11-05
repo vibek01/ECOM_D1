@@ -1,40 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Star, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products } from '../data/products';
 import { AppContainer } from '../components/layout/AppContainer';
 import { Button } from '../components/common/Button';
 import { addItem, incrementQuantity, decrementQuantity } from '../store/cartSlice';
 import type { RootState } from '../store/store';
-import type { ProductVariant } from '../types';
+import type { Product, ProductVariant } from '../types';
+import { apiPublic } from '../api/axios'; // <-- Import the public API instance
+import { Spinner } from '../components/common/Spinner';
 
 export const ProductDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch();
-  const product = products.find((p) => p.id === id);
 
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    product?.variants.find((v) => v.stock > 0) || product?.variants[0] || null
-  );
+  // State for the specific product, loading, and errors
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return; // Guard against undefined ID
+      try {
+        setLoading(true);
+        const response = await apiPublic.get(`/products/${id}`);
+        const fetchedProduct: Product = response.data.data;
+        setProduct(fetchedProduct);
+        // Set the default selected variant
+        if (fetchedProduct.variants && fetchedProduct.variants.length > 0) {
+          setSelectedVariant(fetchedProduct.variants.find(v => v.stock > 0) || fetchedProduct.variants[0]);
+        }
+      } catch (err) {
+        setError('Could not find this sneaker. It might have been removed.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id]);
 
   const cartItem = useSelector((state: RootState) =>
     state.cart.items.find((item) => item.id === selectedVariant?.id)
   );
 
-  if (!product) {
-    return (
-      <AppContainer>
-        <div className="py-24 text-center">
-          <h1 className="text-2xl font-bold">Product not found</h1>
-        </div>
-      </AppContainer>
-    );
-  }
-
   const handleAddToCart = () => {
-    if (selectedVariant) {
+    if (product && selectedVariant) {
       dispatch(
         addItem({
           id: selectedVariant.id,
@@ -44,12 +58,26 @@ export const ProductDetailsPage = () => {
           imageUrl: product.imageUrl,
           size: selectedVariant.size,
           color: selectedVariant.color,
-          quantity: 1, // Always add 1 initially
+          quantity: 1,
           stock: selectedVariant.stock,
         })
       );
     }
   };
+
+  if (loading) {
+    return <div className="flex h-[60vh] items-center justify-center"><Spinner size="lg" /></div>;
+  }
+
+  if (error || !product) {
+    return (
+      <AppContainer>
+        <div className="py-24 text-center">
+          <h1 className="text-2xl font-bold text-red-600">{error || 'Product not found'}</h1>
+        </div>
+      </AppContainer>
+    );
+  }
 
   const isOutOfStock = selectedVariant?.stock === 0;
 
@@ -94,8 +122,6 @@ export const ProductDetailsPage = () => {
                 <p className="text-base text-slate-700">{product.description}</p>
               </div>
 
-              {/* Variant selectors would go here */}
-
               <div className="mt-8">
                 <AnimatePresence mode="wait">
                   {cartItem ? (
@@ -109,22 +135,11 @@ export const ProductDetailsPage = () => {
                     >
                       <span className="font-semibold">Quantity</span>
                       <div className="flex items-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => dispatch(decrementQuantity(cartItem.id))}
-                          aria-label="Decrease quantity"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => dispatch(decrementQuantity(cartItem.id))} aria-label="Decrease quantity">
                           <Minus className="h-4 w-4" />
                         </Button>
                         <span className="w-10 text-center font-medium">{cartItem.quantity}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => dispatch(incrementQuantity(cartItem.id))}
-                          aria-label="Increase quantity"
-                          disabled={cartItem.quantity >= cartItem.stock}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => dispatch(incrementQuantity(cartItem.id))} aria-label="Increase quantity" disabled={cartItem.quantity >= cartItem.stock}>
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
@@ -137,12 +152,7 @@ export const ProductDetailsPage = () => {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <Button
-                        onClick={handleAddToCart}
-                        size="lg"
-                        className="w-full"
-                        disabled={isOutOfStock}
-                      >
+                      <Button onClick={handleAddToCart} size="lg" className="w-full" disabled={isOutOfStock}>
                         {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                       </Button>
                     </motion.div>
