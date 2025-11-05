@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ROUTES } from '../constants';
 import { PageLayout } from '../components/layout/PageLayout';
-import { AdminLayout } from '../components/layout/AdminLayout'; // <-- Import AdminLayout
+import { AdminLayout } from '../components/layout/AdminLayout';
 
 // --- Import Pages ---
 import { HomePage } from '../pages/HomePage';
@@ -11,6 +11,8 @@ import { CartPage } from '../pages/CartPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { ProductManagementPage } from '../pages/admin/ProductManagementPage'; // <-- Import
+import { AddProductPage } from '../pages/admin/AddProductPage'; // <-- Import
 import { ProfilePage } from '../pages/ProfilePage';
 
 // --- Import Route Protectors ---
@@ -33,19 +35,17 @@ export const AppRouter = () => {
         </Route>
 
         {/* --- Admin Routes --- */}
-        {/* This group is protected by AdminRoute and uses the new AdminLayout */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            {/* Future admin pages like /admin/products will go here */}
+            <Route path="/admin/products" element={<ProductManagementPage />} /> {/* <-- Add */}
+            <Route path="/admin/products/add" element={<AddProductPage />} /> {/* <-- Add */}
           </Route>
         </Route>
 
         {/* --- Full-page Auth Routes --- */}
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
-
-        {/* 404 Not Found Route would go here */}
       </Routes>
     </BrowserRouter>
   );
