@@ -2,28 +2,17 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import { ApiError } from '../utils/ApiError.js';
 
-/**
- * Uploads a file from a local path to Cloudinary.
- * @param {string} localFilePath - The path to the file on the local server.
- * @returns {object} The Cloudinary upload response object.
- */
 const uploadOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) {
       throw new ApiError(400, 'File path is required for upload.');
     }
-
-    // Upload the file to Cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: 'auto', // Automatically detect the file type (image, video, etc.)
+      resource_type: 'auto',
     });
-
-    // File has been uploaded successfully, now remove the locally saved temporary file
     fs.unlinkSync(localFilePath);
-
     return response;
   } catch (error) {
-    // If the upload fails, make sure to remove the temporary local file
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
@@ -32,4 +21,25 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+/**
+ * Deletes an asset from Cloudinary using its public ID.
+ * @param {string} imageUrl - The full URL of the image stored in the database.
+ * @returns {object} The Cloudinary deletion response object.
+ */
+const deleteFromCloudinary = async (imageUrl) => {
+  try {
+    // Extract the public ID from the full URL
+    const publicId = imageUrl.split('/').pop().split('.')[0];
+    if (!publicId) {
+      throw new ApiError(400, 'Could not derive public ID from URL.');
+    }
+
+    const response = await cloudinary.uploader.destroy(publicId);
+    return response;
+  } catch (error) {
+    console.error('Cloudinary deletion failed:', error);
+    throw new ApiError(500, 'Failed to delete file from Cloudinary.');
+  }
+};
+
+export { uploadOnCloudinary, deleteFromCloudinary };
