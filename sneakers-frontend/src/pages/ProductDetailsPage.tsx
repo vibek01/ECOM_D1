@@ -23,21 +23,23 @@ export const ProductDetailsPage = () => {
     }
   }, [id, dispatch]);
 
-  // Effect to set the default variant once the product is fetched
   useEffect(() => {
     if (product?.variants && product.variants.length > 0) {
       setSelectedVariant(product.variants.find(v => v.stock > 0) || product.variants[0]);
     }
   }, [product]);
 
+  // --- FIX: Use a composite ID for checking the cart ---
+  const compositeId = product && selectedVariant ? `${product.id}-${selectedVariant.id}` : null;
+
   const cartItem = useSelector((state: RootState) =>
-    state.cart.items.find((item) => item.id === selectedVariant?.id)
+    compositeId ? state.cart.items.find((item) => item.id === compositeId) : undefined
   );
 
   const handleAddToCart = () => {
-    if (product && selectedVariant) {
+    if (product && selectedVariant && compositeId) {
       dispatch(addItem({
-        id: selectedVariant.id,
+        id: compositeId, // <-- Use the unique composite ID
         productId: product.id,
         name: product.name,
         price: product.price,
@@ -47,6 +49,18 @@ export const ProductDetailsPage = () => {
         quantity: 1,
         stock: selectedVariant.stock,
       }));
+    }
+  };
+
+  const handleIncrement = () => {
+    if (cartItem) {
+      dispatch(incrementQuantity(cartItem.id)); // cartItem.id is already the composite ID
+    }
+  };
+
+  const handleDecrement = () => {
+    if (cartItem) {
+      dispatch(decrementQuantity(cartItem.id)); // cartItem.id is already the composite ID
     }
   };
 
@@ -71,6 +85,7 @@ export const ProductDetailsPage = () => {
       <AppContainer>
         <div className="py-12">
           <div className="grid gap-10 md:grid-cols-2">
+            {/* Product Image Section (No changes needed) */}
             <div className="flex items-center justify-center rounded-lg bg-gray-100 p-8">
               <motion.img
                 key={product.imageUrl}
@@ -82,6 +97,7 @@ export const ProductDetailsPage = () => {
                 transition={{ duration: 0.5 }}
               />
             </div>
+            {/* Product Details Section */}
             <div>
               <p className="font-semibold uppercase tracking-wider text-slate-500">{product.brand}</p>
               <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{product.name}</h1>
@@ -99,9 +115,9 @@ export const ProductDetailsPage = () => {
                     <motion.div key="quantityControl" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="flex h-11 w-full items-center justify-between rounded-md border border-slate-300 px-2">
                       <span className="font-semibold">Quantity</span>
                       <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={() => dispatch(decrementQuantity(cartItem.id))} aria-label="Decrease quantity"><Minus className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={handleDecrement} aria-label="Decrease quantity"><Minus className="h-4 w-4" /></Button>
                         <span className="w-10 text-center font-medium">{cartItem.quantity}</span>
-                        <Button variant="ghost" size="icon" onClick={() => dispatch(incrementQuantity(cartItem.id))} aria-label="Increase quantity" disabled={cartItem.quantity >= cartItem.stock}><Plus className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={handleIncrement} aria-label="Increase quantity" disabled={cartItem.quantity >= cartItem.stock}><Plus className="h-4 w-4" /></Button>
                       </div>
                     </motion.div>
                   ) : (
