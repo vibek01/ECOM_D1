@@ -1,16 +1,17 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ROUTES } from '../constants';
 import { PageLayout } from '../components/layout/PageLayout';
+import { AdminLayout } from '../components/layout/AdminLayout'; // <-- Import AdminLayout
 
 // --- Import Pages ---
 import { HomePage } from '../pages/HomePage';
 import { ProductListingPage } from '../pages/ProductListingPage';
 import { ProductDetailsPage } from '../pages/ProductDetailsPage';
 import { CartPage } from '../pages/CartPage';
-import { LoginPage } from '../pages/LoginPage'; // <-- Import
-import { RegisterPage } from '../pages/RegisterPage'; // <-- Import
-import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'; // <-- Import
-import { ProfilePage } from '../pages/ProfilePage'; // <-- Import a new placeholder page
+import { LoginPage } from '../pages/LoginPage';
+import { RegisterPage } from '../pages/RegisterPage';
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { ProfilePage } from '../pages/ProfilePage';
 
 // --- Import Route Protectors ---
 import { PrivateRoute } from './PrivateRoute';
@@ -20,24 +21,27 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Routes with standard Header and Footer */}
+        {/* --- Customer Facing Routes --- */}
         <Route element={<PageLayout />}>
           <Route path={ROUTES.HOME} element={<HomePage />} />
           <Route path={ROUTES.PRODUCTS} element={<ProductListingPage />} />
           <Route path={ROUTES.PRODUCT_DETAIL} element={<ProductDetailsPage />} />
           <Route path={ROUTES.CART} element={<CartPage />} />
-
           <Route element={<PrivateRoute />}>
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
+        </Route>
 
-          {/* Protected Admin Routes */}
-          <Route element={<AdminRoute />}>
+        {/* --- Admin Routes --- */}
+        {/* This group is protected by AdminRoute and uses the new AdminLayout */}
+        <Route element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            {/* Future admin pages like /admin/products will go here */}
           </Route>
         </Route>
 
-        {/* Full-page routes without standard layout */}
+        {/* --- Full-page Auth Routes --- */}
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
 

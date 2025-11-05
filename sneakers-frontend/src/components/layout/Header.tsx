@@ -19,6 +19,8 @@ export const Header = () => {
 
   const activeLinkStyle = {
     color: '#020617', // slate-950
+    textDecoration: 'underline',
+    textUnderlineOffset: '4px',
   };
 
   return (
@@ -39,7 +41,16 @@ export const Header = () => {
               >
                 All Sneakers
               </NavLink>
-              {/* Other nav links */}
+              {/* FIX: Conditionally render the Admin Dashboard link */}
+              {user && user.role === 'ADMIN' && (
+                <NavLink
+                  to="/admin/dashboard"
+                  style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
+                  className="font-semibold text-blue-600 transition-colors hover:text-blue-800"
+                >
+                  Admin Dashboard
+                </NavLink>
+              )}
             </nav>
           </div>
 
@@ -51,7 +62,6 @@ export const Header = () => {
 
             {user ? (
               <>
-                {/* FIX: Wrapped the User icon in a NavLink to make it functional */}
                 <NavLink to="/profile" aria-label="User Profile">
                   <Button variant="ghost" size="icon">
                     <User className="h-5 w-5 text-slate-600" />

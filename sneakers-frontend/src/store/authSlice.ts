@@ -5,23 +5,21 @@ import type { User } from '../types';
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  // FIX: Added authStatus to track the initial session check
-  authStatus: 'initializing' | 'authenticated' | 'unauthenticated';
+  authStatus: 'initializing' | 'authenticated' | 'unauthenticated'; // For the persistent session
+  status: 'idle' | 'loading' | 'succeeded' | 'failed'; // For individual actions like login/register
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   accessToken: null,
-  authStatus: 'initializing', // Start in an initializing state
+  authStatus: 'initializing',
+  status: 'idle',
   error: null,
 };
 
-// FIX: New async thunk to verify auth status on app load
 export const verifyAuth = createAsyncThunk('auth/verifyAuth', async (_, { rejectWithValue }) => {
   try {
-    // The refresh-token endpoint is perfect for this. It uses the secure cookie
-    // to get a new access token and user data if the session is still valid.
     const response = await apiPublic.post('/auth/refresh-token', {}, { withCredentials: true });
     return response.data.data;
   } catch (error: any) {
@@ -63,6 +61,7 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.authStatus = 'unauthenticated';
+      state.status = 'idle';
     },
   },
   extraReducers: (builder) => {
@@ -80,14 +79,31 @@ const authSlice = createSlice({
         state.authStatus = 'unauthenticated';
       })
       // Login
+      .addCase(loginUser.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
       .addCase(loginUser.fulfilled, (state, action) => {
+        state.status = 'succeeded';
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.authStatus = 'authenticated';
-        state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.status = 'failed';
         state.authStatus = 'unauthenticated';
+        state.error = action.payload as string;
+      })
+      // Register
+      .addCase(registerUser.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.status = 'succeeded';
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.status = 'failed';
         state.error = action.payload as string;
       })
       // Logout
@@ -95,6 +111,7 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.authStatus = 'unauthenticated';
+        state.status = 'idle';
       });
   },
 });
