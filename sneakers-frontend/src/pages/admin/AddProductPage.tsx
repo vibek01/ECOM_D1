@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ProductForm, type TProductFormSchema } from '../../components/admin/ProductForm';
+import { ProductForm } from '../../components/admin/ProductForm';
 import apiPrivate from '../../api/axios';
 
 export const AddProductPage = () => {
@@ -8,7 +8,8 @@ export const AddProductPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreateProduct = async (_: TProductFormSchema, formData: FormData) => {
+  // FIX: The handler now correctly accepts only one argument: the FormData object.
+  const handleCreateProduct = async (formData: FormData) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -17,7 +18,6 @@ export const AddProductPage = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      // On success, navigate to the main product management page
       navigate('/admin/products');
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred while creating the product.');
@@ -38,7 +38,7 @@ export const AddProductPage = () => {
       )}
 
       <div className="mt-8 rounded-lg border bg-white p-8 shadow-sm">
-        <ProductForm onSubmit={handleCreateProduct} isLoading={isLoading} />
+        <ProductForm onSubmit={handleCreateProduct} isLoading={isLoading} submitButtonText="Create Product" />
       </div>
     </div>
   );

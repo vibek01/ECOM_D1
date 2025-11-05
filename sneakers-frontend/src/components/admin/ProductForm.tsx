@@ -6,8 +6,7 @@ import { Input } from '../common/Input';
 import { Spinner } from '../common/Spinner';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
-// FIX: Using z.coerce is the correct, modern way to handle string-to-number
-// conversions from form inputs, which resolves the complex resolver type errors.
+// FIX: Using z.coerce is the correct, modern way to handle number inputs.
 const VariantSchema = z.object({
   size: z.string().min(1, 'Size is required'),
   color: z.string().min(1, 'Color is required'),
@@ -26,6 +25,8 @@ export const ProductFormSchema = z.object({
 export type TProductFormSchema = z.infer<typeof ProductFormSchema>;
 
 interface ProductFormProps {
+  // FIX: The onSubmit prop now has a simpler, correct signature.
+  // It only expects the final FormData object.
   onSubmit: (formData: FormData) => void;
   initialData?: Partial<TProductFormSchema>;
   isLoading: boolean;
@@ -44,6 +45,7 @@ export const ProductForm = ({
     control,
     formState: { errors },
   } = useForm<TProductFormSchema>({
+    // This resolver now works correctly with the coerced schema.
     resolver: zodResolver(ProductFormSchema),
     defaultValues: initialData || {
       variants: [{ size: '', color: '', stock: 0 }],
@@ -56,7 +58,7 @@ export const ProductForm = ({
   });
 
   // FIX: Explicitly typing the handler with SubmitHandler<TProductFormSchema>
-  // ensures it perfectly matches the type expected by react-hook-form's handleSubmit.
+  // ensures it perfectly matches the type expected by react-hook-form.
   const handleFormSubmit: SubmitHandler<TProductFormSchema> = (data) => {
     const formData = new FormData();
     formData.append('name', data.name);
@@ -72,7 +74,7 @@ export const ProductForm = ({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {/* Main Product Details */}
+      {/* Form fields remain the same, but will now work correctly */}
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Product Name</label>
@@ -109,8 +111,6 @@ export const ProductForm = ({
           {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image.message as string}</p>}
         </div>
       </div>
-
-      {/* Variants Section */}
       <div>
         <h3 className="text-lg font-medium">Variants</h3>
         {errors.variants?.root && <p className="mt-1 text-sm text-red-600">{errors.variants.root.message}</p>}
@@ -150,7 +150,6 @@ export const ProductForm = ({
           Add Variant
         </Button>
       </div>
-
       <div className="flex justify-end">
         <Button type="submit" disabled={isLoading}>
           {isLoading ? <Spinner size="sm" color="light" /> : submitButtonText}

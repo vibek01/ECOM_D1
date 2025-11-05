@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+// FIX: Removed unused 'MoreHorizontal' import
+import { Plus, Trash2, Edit } from 'lucide-react';
 import apiPrivate from '../../api/axios';
 import type { Product } from '../../types';
 import { Button } from '../../components/common/Button';
@@ -44,8 +45,8 @@ export const ProductManagementPage = () => {
   const handleDeleteProduct = async () => {
     if (!productToDelete) return;
     try {
+      // Because of the backend fix, productToDelete.id will now be a valid string
       await apiPrivate.delete(`/products/${productToDelete.id}`);
-      // Refetch products to show the updated list
       fetchProducts();
     } catch (err) {
       setError('Failed to delete product.');
@@ -110,6 +111,7 @@ export const ProductManagementPage = () => {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${product.price.toFixed(2)}</td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
+                          {/* Because of the backend fix, product.id will now be a valid string */}
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
                             <Edit className="h-4 w-4" />
                           </Button>
