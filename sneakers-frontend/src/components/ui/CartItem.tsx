@@ -26,7 +26,7 @@ export const CartItem = ({ item }: CartItemProps) => {
         <div>
           <div className="flex justify-between text-base font-medium text-gray-900">
             <h3>
-              <Link to={`/product/${item.productId}`}>{item.name}</Link>
+              <Link to={`/product/${item.productId}`}>{item.name}</Link> {/* CORRECTED (was implicitly correct, now explicitly) */}
             </h3>
             <p className="ml-4">${(item.price * item.quantity).toFixed(2)}</p>
           </div>

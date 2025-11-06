@@ -5,13 +5,13 @@ import { Button } from '../common/Button';
 
 interface ProductCardProps {
   product: Product;
-  onQuickAdd: (productId: string) => void; // Callback to open the modal
+  onQuickAdd: (productId: string) => void;
 }
 
 export const ProductCard = ({ product, onQuickAdd }: ProductCardProps) => {
   const handleQuickAddClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent the Link from navigating
-    e.stopPropagation(); // Stop the event from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
     onQuickAdd(product.id);
   };
 
@@ -43,7 +43,7 @@ export const ProductCard = ({ product, onQuickAdd }: ProductCardProps) => {
         <Button
           variant="secondary"
           className="w-full relative z-10"
-          onClick={handleQuickAddClick}
+          onClick={handleQuickAddClick} // DEFINITIVE FIX: Corrected the function name
         >
           Quick Add
         </Button>

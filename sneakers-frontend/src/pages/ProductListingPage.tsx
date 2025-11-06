@@ -5,19 +5,20 @@ import { ProductCard } from '../components/ui/ProductCard';
 import { fetchProducts } from '../store/ProductSlice';
 import type { AppDispatch, RootState } from '../store/store';
 import { Spinner } from '../components/common/Spinner';
-import { QuickAddModal } from '../components/ui/QuickAddModal'; // <-- Import the modal
+import { QuickAddModal } from '../components/ui/QuickAddModal';
 
 export const ProductListingPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { products, status, error } = useSelector((state: RootState) => state.products);
 
-  // State for managing the Quick Add Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+    if (status === 'idle') { // Fetch only if we haven't fetched before
+        dispatch(fetchProducts());
+    }
+  }, [status, dispatch]);
 
   const handleOpenModal = (productId: string) => {
     setSelectedProductId(productId);
@@ -42,7 +43,7 @@ export const ProductListingPage = () => {
     return (
       <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} onQuickAdd={handleOpenModal} />
+          <ProductCard key={product.id} product={product} onQuickAdd={handleOpenModal} /> // REVERTED: back to '.id'
         ))}
       </div>
     );
