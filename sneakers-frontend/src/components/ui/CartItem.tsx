@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Plus, Minus, X } from 'lucide-react';
+import { Plus, Minus, X, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+
 import type { CartItem as CartItemType } from '../../types';
 import { Button } from '../common/Button';
 import { incrementQuantity, decrementQuantity, removeItem } from '../../store/cartSlice';
@@ -12,80 +14,137 @@ interface CartItemProps {
 export const CartItem = ({ item }: CartItemProps) => {
   const dispatch = useDispatch();
 
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, ease: 'easeOut' }
+    },
+    exit: {
+      opacity: 0,
+      x: -100,
+      transition: { duration: 0.3, ease: 'easeInOut' }
+    }
+  };
+
   return (
-    <li className="flex py-6 sm:py-10">
-      <div className="flex-shrink-0">
+    <motion.li
+      layout
+      variants={itemVariants}
+      exit="exit"
+      whileHover={{
+        y: -4,
+        boxShadow:
+          '0 12px 24px rgba(0,0,0,0.08), 0 8px 12px rgba(0,0,0,0.05)',
+        transition: { duration: 0.25, ease: 'easeOut' }
+      }}
+      className="group flex flex-col sm:flex-row p-6 rounded-2xl bg-gradient-to-br from-white via-slate-50 to-slate-100 
+                 border border-slate-100 shadow-md hover:shadow-xl hover:border-slate-200 transition-all duration-300"
+    >
+      {/* Product Image with depth and reflection */}
+      <motion.div
+        className="relative flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-2 flex items-center justify-center"
+        whileHover={{ scale: 1.03 }}
+        transition={{ duration: 0.3 }}
+      >
         <img
           src={item.imageUrl}
           alt={item.name}
-          className="h-24 w-24 rounded-lg object-cover object-center sm:h-32 sm:w-32"
+          className="h-32 w-32 sm:h-36 sm:w-36 object-contain drop-shadow-md"
         />
-      </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      </motion.div>
 
-      <div className="ml-4 flex flex-1 flex-col justify-between sm:ml-6">
-        <div className="relative pr-9 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:pr-0">
-          <div>
-            <div className="flex justify-between">
-              <h3 className="text-sm">
-                <Link to={`/product/${item.productId}`} className="font-medium text-gray-700 hover:text-gray-800">
-                  {item.name}
-                </Link>
-              </h3>
-            </div>
-            <div className="mt-1 flex text-sm">
-              <p className="text-gray-500">{item.color}</p>
-              <p className="ml-4 border-l border-gray-200 pl-4 text-gray-500">{item.size}</p>
-            </div>
-            <p className="mt-1 text-sm font-medium text-gray-900">${item.price.toFixed(2)}</p>
+      {/* Product Details */}
+      <div className="ml-0 mt-4 sm:ml-6 sm:mt-0 flex flex-1 flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start">
+            <h3 className="text-lg font-semibold text-slate-900 tracking-tight">
+              <Link
+                to={`/product/${item.productId}`}
+                className="hover:text-teal-600 transition-colors duration-200"
+              >
+                {item.name}
+              </Link>
+            </h3>
+
+            {/* Remove button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+              onClick={() => dispatch(removeItem(item.id))}
+            >
+              <span className="sr-only">Remove</span>
+              <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.3 }}>
+                <X className="h-5 w-5" />
+              </motion.div>
+            </Button>
           </div>
 
-          <div className="mt-4 sm:mt-0 sm:pr-9">
-            <div className="flex items-center">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => dispatch(decrementQuantity(item.id))}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-10 text-center text-sm font-medium text-gray-700">{item.quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => dispatch(incrementQuantity(item.id))}
-                  disabled={item.quantity >= item.stock}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-            </div>
-
-             <div className="absolute right-0 top-0">
-                <Button
-                    variant="ghost"
-                    className="-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500"
-                    onClick={() => dispatch(removeItem(item.id))}
-                >
-                    <span className="sr-only">Remove</span>
-                    <X className="h-5 w-5" />
-                </Button>
-            </div>
+          <div className="mt-1 flex text-sm text-slate-500">
+            <p>{item.color}</p>
+            <p className="ml-4 border-l border-slate-200 pl-4">Size {item.size}</p>
           </div>
+
+          {/* Animated Price */}
+          <motion.p
+            key={item.quantity}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-3 text-xl font-bold text-slate-900 tracking-tight"
+          >
+            ${(item.price * item.quantity).toFixed(2)}
+          </motion.p>
         </div>
-        <p className="mt-4 flex space-x-2 text-sm text-gray-700">
-          {item.stock > 0 ? (
-            <svg className="h-5 w-5 flex-shrink-0 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>          
-          ) : (
-             <svg className="h-5 w-5 flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 102 0V6z" clipRule="evenodd" />
-            </svg>
-          )}
-          <span>{item.stock > 0 ? `In stock` : `Out of stock`}</span>
-        </p>
+
+        {/* Quantity and Stock */}
+        <div className="mt-5 flex items-center justify-between">
+          {/* Quantity Controller */}
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white shadow-inner">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="p-2 text-slate-500 hover:text-slate-800 transition-colors"
+              onClick={() => dispatch(decrementQuantity(item.id))}
+            >
+              <Minus className="h-4 w-4" />
+            </motion.button>
+
+            <motion.span
+              key={item.quantity}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              className="w-10 text-center text-sm font-semibold text-slate-800"
+            >
+              {item.quantity}
+            </motion.span>
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="p-2 text-slate-500 hover:text-slate-800 disabled:opacity-50 transition-colors"
+              onClick={() => dispatch(incrementQuantity(item.id))}
+              disabled={item.quantity >= item.stock}
+            >
+              <Plus className="h-4 w-4" />
+            </motion.button>
+          </div>
+
+          {/* Stock Indicator */}
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg"
+          >
+            <CheckCircle className="h-4 w-4 mr-1.5 text-emerald-600" />
+            <span>In stock</span>
+          </motion.div>
+        </div>
       </div>
-    </li>
+    </motion.li>
   );
 };
