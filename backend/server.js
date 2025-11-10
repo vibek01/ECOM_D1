@@ -25,10 +25,13 @@ connectDB();
 configureCloudinary();
 
 // Middlewares
+// --- THIS IS THE REQUIRED CHANGE ---
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
-  credentials: true,
+  origin: process.env.CORS_ORIGIN, // Ensure this is your frontend URL in .env
+  credentials: true,             // This line is crucial
 }));
+// ---------------------------------
+
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(cookieParser());

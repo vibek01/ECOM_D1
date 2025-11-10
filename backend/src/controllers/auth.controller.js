@@ -2,6 +2,18 @@ import { User } from '../models/user.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import jwt from 'jsonwebtoken';
+
+/**
+ * Creates a robust, environment-aware cookie options object.
+ * - In Production (HTTPS): Cookies are secure and SameSite=None.
+ * - In Development (HTTP): Cookies are not secure and SameSite=Lax.
+ */
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+};
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -19,7 +31,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // Zod validation would go here in a real app
   const { username, email, password } = req.body;
 
   if ([username, email, password].some((field) => field?.trim() === '')) {
@@ -54,15 +65,10 @@ const loginUser = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-  };
-
   return res
     .status(200)
-    .cookie('accessToken', accessToken, options)
-    .cookie('refreshToken', refreshToken, options)
+    .cookie('accessToken', accessToken, cookieOptions)
+    .cookie('refreshToken', refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -79,15 +85,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     { new: true }
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-  };
-
   return res
     .status(200)
-    .clearCookie('accessToken', options)
-    .clearCookie('refreshToken', options)
+    .clearCookie('accessToken', cookieOptions)
+    .clearCookie('refreshToken', cookieOptions)
     .json(new ApiResponse(200, {}, 'User logged out successfully'));
 });
 
@@ -104,15 +105,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
 
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    };
-
     return res
       .status(200)
-      .cookie('accessToken', accessToken, options)
-      .cookie('refreshToken', newRefreshToken, options)
+      .cookie('accessToken', accessToken, cookieOptions)
+      .cookie('refreshToken', newRefreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,
