@@ -5,8 +5,8 @@ import type { User } from '../types';
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  authStatus: 'initializing' | 'authenticated' | 'unauthenticated'; // For the persistent session
-  status: 'idle' | 'loading' | 'succeeded' | 'failed'; // For individual actions like login/register
+  authStatus: 'initializing' | 'authenticated' | 'unauthenticated';
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
@@ -20,6 +20,7 @@ const initialState: AuthState = {
 
 export const verifyAuth = createAsyncThunk('auth/verifyAuth', async (_, { rejectWithValue }) => {
   try {
+    // This request already uses withCredentials via the apiPrivate instance, but being explicit is fine.
     const response = await apiPublic.post('/auth/refresh-token', {}, { withCredentials: true });
     return response.data.data;
   } catch (error: any) {
@@ -29,7 +30,10 @@ export const verifyAuth = createAsyncThunk('auth/verifyAuth', async (_, { reject
 
 export const loginUser = createAsyncThunk('auth/loginUser', async (credentials: any, { rejectWithValue }) => {
   try {
-    const response = await apiPublic.post('/auth/login', credentials);
+    // --- THIS IS THE REQUIRED CHANGE ---
+    // We must explicitly tell this request to handle cookies.
+    const response = await apiPublic.post('/auth/login', credentials, { withCredentials: true });
+    // ------------------------------------
     return response.data.data;
   } catch (error: any) {
     return rejectWithValue(error.response.data.message || 'Login failed');
@@ -38,7 +42,9 @@ export const loginUser = createAsyncThunk('auth/loginUser', async (credentials: 
 
 export const registerUser = createAsyncThunk('auth/registerUser', async (userData: any, { rejectWithValue }) => {
   try {
-    const response = await apiPublic.post('/auth/register', userData);
+    // --- ADDING THIS FOR CONSISTENCY, IN CASE REGISTRATION EVER SETS COOKIES ---
+    const response = await apiPublic.post('/auth/register', userData, { withCredentials: true });
+    // -------------------------------------------------------------------------
     return response.data.data;
   } catch (error: any) {
     return rejectWithValue(error.response.data.message || 'Registration failed');
@@ -46,6 +52,7 @@ export const registerUser = createAsyncThunk('auth/registerUser', async (userDat
 });
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+  // This uses apiPrivate, which already has withCredentials configured globally.
   await apiPrivate.post('/auth/logout');
   return;
 });
@@ -56,12 +63,6 @@ const authSlice = createSlice({
   reducers: {
     setAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
-    },
-    logout: (state) => {
-      state.user = null;
-      state.accessToken = null;
-      state.authStatus = 'unauthenticated';
-      state.status = 'idle';
     },
   },
   extraReducers: (builder) => {
@@ -116,5 +117,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAccessToken, logout } = authSlice.actions;
+export const { setAccessToken } = authSlice.actions;
 export default authSlice.reducer;

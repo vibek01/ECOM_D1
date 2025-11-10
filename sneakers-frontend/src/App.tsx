@@ -7,7 +7,8 @@ import type { AppDispatch } from './store/store';
 function App() {
   const dispatch = useDispatch<AppDispatch>();
 
-  // On initial application load, dispatch verifyAuth to check for an active session
+  // On initial application load, dispatch verifyAuth to check for an active session.
+  // This is the trigger for the entire session restoration process.
   useEffect(() => {
     dispatch(verifyAuth());
   }, [dispatch]);

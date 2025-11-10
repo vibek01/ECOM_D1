@@ -7,16 +7,17 @@ export const PrivateRoute = () => {
   const { user, authStatus } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
 
-  // Show a loading spinner while the initial authentication check is running
+  // 1. If authStatus is 'initializing', we show a loading screen.
+  // This prevents the redirect flicker while we check for a valid session cookie.
   if (authStatus === 'initializing') {
     return <FullScreenSpinner />;
   }
 
-  // If the check is complete and there is a user, render the requested page
+  // 2. If the check is complete and we have a user, show the protected content.
   if (user) {
     return <Outlet />;
   }
 
-  // If the check is complete and there's no user, redirect to login
+  // 3. If the check is complete and there's no user, redirect to the login page.
   return <Navigate to="/login" state={{ from: location }} replace />;
 };
