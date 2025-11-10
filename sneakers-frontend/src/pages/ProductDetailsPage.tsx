@@ -36,63 +36,114 @@ export const ProductDetailsPage = () => {
   } = useProductVariantSelection(product);
 
   if (status === 'loading' || !product) {
-    return <div className="flex h-[60vh] items-center justify-center"><Spinner size="lg" /></div>;
+    return <div className="flex h-[70vh] items-center justify-center"><Spinner size="lg" /></div>;
   }
   if (status === 'failed') {
     return <AppContainer><div className="py-24 text-center"><h1 className="text-2xl font-bold text-red-600">{error || 'Product not found'}</h1></div></AppContainer>;
   }
 
+  // Animation variants for staggering child elements
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } },
+  };
+
   return (
-    <div className="bg-white">
+    <div className="min-h-screen bg-slate-50">
       <AppContainer>
-        <div className="py-12">
-          <div className="grid gap-10 md:grid-cols-2">
-            <div className="flex items-center justify-center rounded-lg bg-gray-100 p-8">
-              <motion.img key={product.imageUrl} src={product.imageUrl} alt={product.name} className="max-h-[450px] w-full object-contain" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} />
-            </div>
-            <div>
-              <p className="font-semibold uppercase tracking-wider text-slate-500">{product.brand}</p>
-              <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-slate-900">{product.name}</h1>
-              <div className="mt-4 flex items-center"><p className="text-3xl text-slate-900">${product.price.toFixed(2)}</p></div>
-              <div className="mt-6"><p className="text-base text-slate-700">{product.description}</p></div>
+        <div className="py-16 sm:py-24">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid gap-12 lg:grid-cols-2 lg:gap-16"
+          >
+            {/* Left Column: Product Image */}
+            <motion.div variants={itemVariants} className="flex items-center justify-center p-8 bg-white rounded-2xl shadow-xl shadow-slate-900/10">
+              <motion.img
+                key={product.imageUrl}
+                src={product.imageUrl}
+                alt={product.name}
+                className="max-h-[500px] w-full object-contain"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
+            </motion.div>
+
+            {/* Right Column: Product Details */}
+            <motion.div variants={itemVariants} className="flex flex-col justify-center">
+              <motion.p variants={itemVariants} className="font-semibold uppercase tracking-widest text-teal-600">{product.brand}</motion.p>
+              
+              <motion.h1 variants={itemVariants} className="mt-2 text-4xl font-extrabold tracking-tighter text-slate-900 sm:text-5xl">{product.name}</motion.h1>
+              
+              <motion.div variants={itemVariants} className="mt-4">
+                <p className="text-4xl font-medium text-slate-900">${product.price.toFixed(2)}</p>
+              </motion.div>
+              
+              <motion.div variants={itemVariants} className="mt-6">
+                <p className="text-base text-slate-600 leading-relaxed">{product.description}</p>
+              </motion.div>
+
               <div className="mt-8 space-y-6">
-                {/* --- CORRECTED --- */}
-                <VariantSelector
-                  variants={product.variants}
-                  type="size"
-                  selectedValue={selectedSize}
-                  onValueSelect={handleSizeSelect}
-                />
-                {/* --- CORRECTED --- */}
-                <VariantSelector
-                  variants={product.variants}
-                  type="color"
-                  selectedValue={selectedColor}
-                  onValueSelect={handleColorSelect}
-                />
+                <motion.div variants={itemVariants}>
+                  <VariantSelector
+                    variants={product.variants}
+                    type="color"
+                    selectedValue={selectedColor}
+                    onValueSelect={handleColorSelect}
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <VariantSelector
+                    variants={product.variants}
+                    type="size"
+                    selectedValue={selectedSize}
+                    onValueSelect={handleSizeSelect}
+                  />
+                </motion.div>
               </div>
-              <div className="mt-8">
+
+              <motion.div variants={itemVariants} className="mt-10">
                 <AnimatePresence mode="wait">
                   {cartItem ? (
-                    <motion.div key="quantityControl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex h-12 w-full items-center justify-between rounded-md border border-slate-300 px-3">
-                      <span className="font-semibold">In Cart</span>
+                    <motion.div
+                      key="quantityControl"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex h-14 w-full items-center justify-between rounded-xl border border-slate-300 px-4"
+                    >
+                      <span className="font-semibold text-slate-800">In Your Cart</span>
                       <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={handleDecrement}><Minus className="h-4 w-4" /></Button>
-                        <span className="w-10 text-center font-medium">{cartItem.quantity}</span>
-                        <Button variant="ghost" size="icon" onClick={handleIncrement} disabled={cartItem.quantity >= cartItem.stock}><Plus className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={handleDecrement}><Minus className="h-5 w-5" /></Button>
+                        <span className="w-10 text-center font-medium text-lg">{cartItem.quantity}</span>
+                        <Button variant="ghost" size="icon" onClick={handleIncrement} disabled={cartItem.quantity >= cartItem.stock}><Plus className="h-5 w-5" /></Button>
                       </div>
                     </motion.div>
                   ) : (
-                    <motion.div key="addToCartButton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <Button onClick={handleAddToCart} size="lg" className="w-full" disabled={isAddToCartDisabled}>
+                    <motion.div
+                      key="addToCartButton"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button onClick={handleAddToCart} size="lg" className="w-full h-14 text-lg bg-teal-600 hover:bg-teal-700" disabled={isAddToCartDisabled}>
                         {isAddToCartDisabled ? 'Unavailable' : 'Add to Cart'}
                       </Button>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </AppContainer>
     </div>

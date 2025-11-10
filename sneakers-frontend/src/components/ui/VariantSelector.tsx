@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
 import type { ProductVariant } from '../../types';
 
 interface VariantSelectorProps {
@@ -18,35 +19,34 @@ export const VariantSelector = ({
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-gray-900 capitalize">{type}</h3>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 capitalize">{type}</h3>
+      <div className="mt-3 flex flex-wrap gap-3">
         {uniqueValues.map((value) => {
           const isSelected = selectedValue === value;
-
-          // --- DEFINITIVE FIX: SIMPLIFIED DISABLED LOGIC ---
-          // An option is disabled only if ALL variants containing that option are out of stock.
-          // This ensures that if a "Size 9" exists in any color with stock, it remains enabled.
           const isDisabled = variants
             .filter(variant => variant[type] === value)
             .every(variant => variant.stock === 0);
 
           return (
-            <button
+            <motion.button
               key={value}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onValueSelect(value)}
               className={clsx(
-                'rounded-md border px-4 py-2 text-sm font-medium transition-colors',
-                'focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2',
-                'disabled:cursor-not-allowed disabled:opacity-25',
+                'min-w-[4rem] rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-30 disabled:bg-slate-100 disabled:line-through',
                 {
-                  'border-slate-900 bg-slate-900 text-white': isSelected,
-                  'border-gray-300 bg-white text-gray-900 hover:bg-gray-50': !isSelected,
+                  // Selected State
+                  'border-teal-600 bg-teal-600 text-white shadow-md': isSelected,
+                  // Default State
+                  'border-slate-300 bg-white text-slate-800 hover:border-slate-400': !isSelected,
                 }
               )}
               disabled={isDisabled}
             >
               {value}
-            </button>
+            </motion.button>
           );
         })}
       </div>
