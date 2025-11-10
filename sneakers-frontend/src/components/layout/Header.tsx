@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { ShoppingBag, User, Search, Zap, LogOut } from 'lucide-react';
+import { ShoppingBag, User, Zap, LogOut } from 'lucide-react';
 import { AppContainer } from './AppContainer';
 import { Button } from '../common/Button';
 import type { RootState, AppDispatch } from '../../store/store';
 import { logoutUser } from '../../store/authSlice';
+import { SearchBar } from '../ui/SearchBar';
 
 export const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,35 +19,32 @@ export const Header = () => {
   };
 
   const activeLinkStyle = {
-    color: '#020617', // slate-950
-    textDecoration: 'underline',
-    textUnderlineOffset: '4px',
+    color: '#0f172a', // slate-900
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-lg">
       <AppContainer>
         <div className="flex h-16 items-center justify-between">
           {/* Left Side: Logo and Nav */}
           <div className="flex items-center gap-8">
             <NavLink to="/" className="flex items-center gap-2">
               <Zap className="h-6 w-6 text-slate-900" />
-              <span className="text-lg font-bold tracking-tight">Sneakers</span>
+              <span className="text-xl font-bold tracking-tight text-slate-900">Sneakers</span>
             </NavLink>
-            <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+            <nav className="hidden items-center gap-6 text-sm font-medium text-gray-500 md:flex">
               <NavLink
                 to="/products"
                 style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                className="transition-colors hover:text-slate-950"
+                className="transition-colors hover:text-slate-900"
               >
                 All Sneakers
               </NavLink>
-              {/* FIX: Conditionally render the Admin Dashboard link */}
               {user && user.role === 'ADMIN' && (
                 <NavLink
                   to="/admin/dashboard"
                   style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}
-                  className="font-semibold text-blue-600 transition-colors hover:text-blue-800"
+                  className="font-semibold text-indigo-600 transition-colors hover:text-indigo-800"
                 >
                   Admin Dashboard
                 </NavLink>
@@ -56,19 +54,19 @@ export const Header = () => {
 
           {/* Right Side: Actions */}
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" aria-label="Search">
-              <Search className="h-5 w-5 text-slate-600" />
-            </Button>
+            <div className="hidden md:block">
+              <SearchBar />
+            </div>
 
             {user ? (
               <>
                 <NavLink to="/profile" aria-label="User Profile">
                   <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5 text-slate-600" />
+                    <User className="h-5 w-5 text-gray-600" />
                   </Button>
                 </NavLink>
                 <Button variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
-                  <LogOut className="h-5 w-5 text-slate-600" />
+                  <LogOut className="h-5 w-5 text-gray-600" />
                 </Button>
               </>
             ) : (
@@ -79,9 +77,9 @@ export const Header = () => {
 
             <NavLink to="/cart" className="relative" aria-label="Shopping Cart">
               <Button variant="ghost" size="icon">
-                <ShoppingBag className="h-5 w-5 text-slate-600" />
+                <ShoppingBag className="h-5 w-5 text-gray-600" />
                 {cartItemCount > 0 && (
-                  <span className="absolute right-0 top-0 flex h-5 w-5 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
                     {cartItemCount}
                   </span>
                 )}
