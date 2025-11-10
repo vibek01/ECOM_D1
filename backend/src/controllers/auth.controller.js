@@ -4,15 +4,11 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 
-/**
- * Creates a robust, environment-aware cookie options object.
- * - In Production (HTTPS): Cookies are secure and SameSite=None.
- * - In Development (HTTP): Cookies are not secure and SameSite=Lax.
- */
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  path: '/',
 };
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -30,26 +26,52 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
-const registerUser = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies.refreshToken;
+  if (!incomingRefreshToken) throw new ApiError(401, 'Unauthorized request: No token provided');
 
-  if ([username, email, password].some((field) => field?.trim() === '')) {
-    throw new ApiError(400, 'All fields are required');
+  try {
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, 'Invalid refresh token');
+    }
+
+    // --- THIS IS THE REQUIRED LOGIC ---
+    // If the user is an Admin, we intentionally refuse to refresh their session,
+    // which will cause the frontend to log them out.
+    if (user.role === 'ADMIN') {
+      throw new ApiError(403, 'Admin sessions are not persistent and require re-login.');
+    }
+    // ------------------------------------
+
+    if (incomingRefreshToken !== user.refreshToken) {
+      throw new ApiError(401, 'Refresh token is expired or used');
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
+
+    return res
+      .status(200)
+      .cookie('accessToken', accessToken, cookieOptions)
+      .cookie('refreshToken', refreshToken, cookieOptions)
+      .json(
+        new ApiResponse(
+          200,
+          { user: loggedInUser, accessToken, refreshToken },
+          'Access token refreshed'
+        )
+      );
+  } catch (error) {
+    // If our custom ApiError was thrown (like the admin check), pass it along.
+    // Otherwise, create a new one for generic JWT errors.
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(401, error?.message || 'Invalid refresh token');
   }
-
-  const existedUser = await User.findOne({ $or: [{ username }, { email }] });
-  if (existedUser) {
-    throw new ApiError(409, 'User with this email or username already exists');
-  }
-
-  const user = await User.create({ username, email, password });
-  const createdUser = await User.findById(user._id).select('-password -refreshToken');
-
-  if (!createdUser) {
-    throw new ApiError(500, 'Something went wrong while registering the user');
-  }
-
-  return res.status(201).json(new ApiResponse(201, createdUser, 'User registered successfully'));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -92,33 +114,21 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, 'User logged out successfully'));
 });
 
-const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-  if (!incomingRefreshToken) throw new ApiError(401, 'Unauthorized request');
-
-  try {
-    const decodedToken = jwt.verify(incomingRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
-    const user = await User.findById(decodedToken?._id);
-
-    if (!user) throw new ApiError(401, 'Invalid refresh token');
-    if (incomingRefreshToken !== user.refreshToken) throw new ApiError(401, 'Refresh token is expired or used');
-
-    const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
-
-    return res
-      .status(200)
-      .cookie('accessToken', accessToken, cookieOptions)
-      .cookie('refreshToken', newRefreshToken, cookieOptions)
-      .json(
-        new ApiResponse(
-          200,
-          { accessToken, refreshToken: newRefreshToken },
-          'Access token refreshed'
-        )
-      );
-  } catch (error) {
-    throw new ApiError(401, error?.message || 'Invalid refresh token');
+const registerUser = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+  if ([username, email, password].some((field) => field?.trim() === '')) {
+    throw new ApiError(400, 'All fields are required');
   }
+  const existedUser = await User.findOne({ $or: [{ username }, { email }] });
+  if (existedUser) {
+    throw new ApiError(409, 'User with this email or username already exists');
+  }
+  const user = await User.create({ username, email, password });
+  const createdUser = await User.findById(user._id).select('-password -refreshToken');
+  if (!createdUser) {
+    throw new ApiError(500, 'Something went wrong while registering the user');
+  }
+  return res.status(201).json(new ApiResponse(201, createdUser, 'User registered successfully'));
 });
 
 export { registerUser, loginUser, logoutUser, refreshAccessToken };
