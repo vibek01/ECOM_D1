@@ -17,21 +17,24 @@ router.route('/').get(getAllProducts);
 router.route('/:id').get(getProductById);
 
 // --- Admin-Only Routes ---
+
+// --- MODIFIED: Replaced upload.single('image') with the new 'upload' middleware ---
 router
   .route('/')
   .post(
     verifyJWT,
     adminOnly,
-    upload.single('image'), // 'image' must match the field name in the form data
+    upload, // Use the new array upload middleware
     createProduct
   );
 
+// --- MODIFIED: Replaced upload.single('image') with the new 'upload' middleware ---
 router
   .route('/:id')
   .put(
     verifyJWT,
     adminOnly,
-    upload.single('image'),
+    upload, // Use the new array upload middleware
     updateProduct
   )
   .delete(verifyJWT, adminOnly, deleteProduct);

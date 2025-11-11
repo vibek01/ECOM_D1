@@ -19,8 +19,9 @@ const storage = multer.diskStorage({
   },
 });
 
+// --- MODIFIED: Changed from .single('image') to .array('variantImages', 10) ---
+// This allows up to 10 files to be uploaded with the field name 'variantImages'.
 export const upload = multer({
   storage,
-  // Optional: Add file size and type limits here for security
-  // limits: { fileSize: 1024 * 1024 * 5 }, // e.g., 5 MB limit
-});
+  limits: { fileSize: 1024 * 1024 * 5 }, // 5 MB limit per file
+}).array('variantImages', 10);

@@ -1,12 +1,11 @@
 import mongoose, { Schema } from 'mongoose';
 
-// --- DEFINITIVE FIX ---
-// Add the toJSON transform to the subdocument schema as well.
-// This ensures that variants also have their '_id' renamed to 'id'.
+// --- MODIFIED: Added imageUrl to the variant schema ---
 const productVariantSchema = new Schema({
   size: { type: String, required: true },
   color: { type: String, required: true },
   stock: { type: Number, required: true, min: 0, default: 0 },
+  imageUrl: { type: String, required: true }, // <-- ADDED
 }, {
   toJSON: {
     transform: function (doc, ret) {
@@ -28,7 +27,8 @@ const productSchema = new Schema(
     brand: { type: String, required: true, trim: true },
     description: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
-    imageUrl: { type: String, required: true },
+    // --- REMOVED: The main imageUrl is no longer needed ---
+    // imageUrl: { type: String, required: true }, 
     variants: [productVariantSchema],
   },
   {

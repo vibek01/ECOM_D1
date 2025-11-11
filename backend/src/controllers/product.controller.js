@@ -1,18 +1,17 @@
-import mongoose from 'mongoose'; // <-- Import mongoose
+import mongoose from 'mongoose';
 import { Product } from '../models/product.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../services/cloudinary.service.js';
 
-// --- PUBLIC CONTROLLERS ---
+// --- PUBLIC CONTROLLERS (No Changes) ---
 const getAllProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({});
   return res.status(200).json(new ApiResponse(200, products, 'Products fetched successfully'));
 });
 
 const getProductById = asyncHandler(async (req, res) => {
-  // FIX: Add validation to check if the ID is a valid ObjectId format
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     throw new ApiError(400, 'Invalid product ID format.');
   }
@@ -21,75 +20,122 @@ const getProductById = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, product, 'Product fetched successfully'));
 });
 
-// --- ADMIN-ONLY CONTROLLERS ---
+
+// --- ADMIN-ONLY CONTROLLERS (MODIFIED) ---
+
+/**
+ * @description Create a new product with variant-specific images
+ */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, brand, description, price, variants } = req.body;
+  const { name, brand, description, price } = req.body;
+  const variants = JSON.parse(req.body.variants || '[]');
 
-  if (!name || !brand || !description || !price) {
-    throw new ApiError(400, 'All fields (name, brand, description, price) are required.');
-  }
-  const imageLocalPath = req.file?.path;
-  if (!imageLocalPath) {
-    throw new ApiError(400, 'Product image is required.');
+  if (!name || !brand || !description || !price || variants.length === 0) {
+    throw new ApiError(400, 'All fields and at least one variant are required.');
   }
 
-  const image = await uploadOnCloudinary(imageLocalPath);
-  if (!image) {
-    throw new ApiError(500, 'Error while uploading image.');
+  const files = req.files;
+  if (!files || files.length !== variants.length) {
+    throw new ApiError(400, 'Each variant must have a corresponding image.');
   }
+
+  // Upload all variant images to Cloudinary concurrently
+  const imageUploadPromises = files.map(file => uploadOnCloudinary(file.path));
+  const cloudinaryResponses = await Promise.all(imageUploadPromises);
+
+  // Assign uploaded image URLs to their respective variants
+  const variantsWithImages = variants.map((variant, index) => {
+    const cloudinaryResponse = cloudinaryResponses[index];
+    if (!cloudinaryResponse || !cloudinaryResponse.url) {
+      throw new ApiError(500, `Failed to upload image for variant ${index + 1}.`);
+    }
+    return {
+      ...variant,
+      imageUrl: cloudinaryResponse.url,
+    };
+  });
 
   const product = await Product.create({
     name,
     brand,
     description,
     price,
-    imageUrl: image.url,
-    variants: variants ? JSON.parse(variants) : [],
+    variants: variantsWithImages,
   });
 
   return res.status(201).json(new ApiResponse(201, product, 'Product created successfully'));
 });
 
+/**
+ * @description Update an existing product and its variants/images
+ */
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, brand, description, price, variants } = req.body;
   const { id } = req.params;
-
-  // FIX: Add validation to check if the ID is a valid ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, 'Invalid product ID format.');
   }
+
+  const { name, brand, description, price } = req.body;
+  const newVariantsData = JSON.parse(req.body.variants || '[]');
+  const files = req.files || [];
 
   const product = await Product.findById(id);
   if (!product) {
     throw new ApiError(404, 'Product not found.');
   }
 
-  let newImageUrl = product.imageUrl;
-  if (req.file) {
-    const imageLocalPath = req.file.path;
-    const newImage = await uploadOnCloudinary(imageLocalPath);
-    if (!newImage) throw new ApiError(500, 'Error while uploading new image.');
-    newImageUrl = newImage.url;
-    await deleteFromCloudinary(product.imageUrl);
+  const oldImageUrls = product.variants.map(v => v.imageUrl);
+  const finalVariants = [];
+  const finalImageUrls = [];
+  let fileIndex = 0;
+
+  // Upload new images and prepare the final variants array
+  const uploadPromises = newVariantsData.map(async (variant) => {
+    // If a variant has an imageUrl, it's an existing one.
+    if (variant.imageUrl) {
+      finalImageUrls.push(variant.imageUrl);
+      return variant;
+    }
+    // If no imageUrl, it's a new variant needing a new image.
+    else {
+      const file = files[fileIndex++];
+      if (!file) {
+        throw new ApiError(400, 'Mismatch between new variants and uploaded images.');
+      }
+      const cloudinaryResponse = await uploadOnCloudinary(file.path);
+      if (!cloudinaryResponse || !cloudinaryResponse.url) {
+        throw new ApiError(500, 'Failed to upload a new variant image.');
+      }
+      finalImageUrls.push(cloudinaryResponse.url);
+      return { ...variant, imageUrl: cloudinaryResponse.url };
+    }
+  });
+
+  const processedVariants = await Promise.all(uploadPromises);
+
+  // Determine which old images to delete from Cloudinary
+  const imagesToDelete = oldImageUrls.filter(url => !finalImageUrls.includes(url));
+  if (imagesToDelete.length > 0) {
+    await Promise.all(imagesToDelete.map(url => deleteFromCloudinary(url)));
   }
 
+  // Update product fields
   product.name = name || product.name;
   product.brand = brand || product.brand;
   product.description = description || product.description;
   product.price = price || product.price;
-  product.imageUrl = newImageUrl;
-  if (variants) {
-    product.variants = JSON.parse(variants);
-  }
+  product.variants = processedVariants;
 
   const updatedProduct = await product.save();
+
   return res.status(200).json(new ApiResponse(200, updatedProduct, 'Product updated successfully'));
 });
 
+/**
+ * @description Delete a product and all its variant images from Cloudinary
+ */
 const deleteProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  // FIX: Add validation to check if the ID is a valid ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, 'Invalid product ID format.');
   }
@@ -99,11 +145,17 @@ const deleteProduct = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Product not found.');
   }
 
-  await deleteFromCloudinary(product.imageUrl);
+  // Delete all variant images from Cloudinary concurrently
+  if (product.variants && product.variants.length > 0) {
+    const deletePromises = product.variants.map(variant => deleteFromCloudinary(variant.imageUrl));
+    await Promise.all(deletePromises);
+  }
+
   await product.deleteOne();
 
   return res.status(200).json(new ApiResponse(200, {}, 'Product deleted successfully'));
 });
+
 
 export {
   getAllProducts,
