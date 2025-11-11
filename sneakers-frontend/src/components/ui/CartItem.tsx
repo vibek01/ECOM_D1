@@ -14,30 +14,22 @@ interface CartItemProps {
 export const CartItem = ({ item }: CartItemProps) => {
   const dispatch = useDispatch();
 
-  // Animation variants
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4, ease: 'easeOut' }
-    },
-    exit: {
-      opacity: 0,
-      x: -100,
-      transition: { duration: 0.3, ease: 'easeInOut' }
-    }
-  };
+  // FIX: The 'itemVariants' constant has been removed to prevent the TypeScript error.
+  // Animations will be applied directly to the motion component below.
 
   return (
     <motion.li
       layout
-      variants={itemVariants}
-      exit="exit"
+      // FIX: Applying animation properties directly to the component.
+      // This is the robust solution that avoids the 'variants' type issue.
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
+      exit={{ opacity: 0, x: -100, transition: { duration: 0.3, ease: 'easeInOut' } }}
+      
+      // The hover animations and styling remain the same.
       whileHover={{
         y: -4,
-        boxShadow:
-          '0 12px 24px rgba(0,0,0,0.08), 0 8px 12px rgba(0,0,0,0.05)',
+        boxShadow: '0 12px 24px rgba(0,0,0,0.08), 0 8px 12px rgba(0,0,0,0.05)',
         transition: { duration: 0.25, ease: 'easeOut' }
       }}
       className="group flex flex-col sm:flex-row p-6 rounded-2xl bg-gradient-to-br from-white via-slate-50 to-slate-100 

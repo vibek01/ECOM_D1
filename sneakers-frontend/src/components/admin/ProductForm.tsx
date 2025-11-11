@@ -6,11 +6,14 @@ import { Input } from '../common/Input';
 import { Spinner } from '../common/Spinner';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
-// FIX: Using z.coerce is the correct, modern way to handle number inputs.
+// --- MODIFIED: VariantSchema now includes an optional image ---
 const VariantSchema = z.object({
   size: z.string().min(1, 'Size is required'),
   color: z.string().min(1, 'Color is required'),
   stock: z.coerce.number().min(0, 'Stock cannot be negative'),
+  image: z.any().optional(), // For the file input
+  imageUrl: z.string().optional(), // For existing images on edit
+  id: z.string().optional(), // For existing variants on edit
 });
 
 export const ProductFormSchema = z.object({
@@ -18,17 +21,14 @@ export const ProductFormSchema = z.object({
   brand: z.string().min(2, 'Brand is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.coerce.number().min(0, 'Price must be positive'),
-  image: z.any().optional(),
   variants: z.array(VariantSchema).min(1, 'At least one variant is required'),
 });
 
 export type TProductFormSchema = z.infer<typeof ProductFormSchema>;
 
 interface ProductFormProps {
-  // FIX: The onSubmit prop now has a simpler, correct signature.
-  // It only expects the final FormData object.
   onSubmit: (formData: FormData) => void;
-  initialData?: Partial<TProductFormSchema>;
+  initialData?: Partial<TProductFormSchema & { variants: any[] }>;
   isLoading: boolean;
   submitButtonText?: string;
 }
@@ -45,7 +45,6 @@ export const ProductForm = ({
     control,
     formState: { errors },
   } = useForm<TProductFormSchema>({
-    // This resolver now works correctly with the coerced schema.
     resolver: zodResolver(ProductFormSchema),
     defaultValues: initialData || {
       variants: [{ size: '', color: '', stock: 0 }],
@@ -57,24 +56,44 @@ export const ProductForm = ({
     name: 'variants',
   });
 
-  // FIX: Explicitly typing the handler with SubmitHandler<TProductFormSchema>
-  // ensures it perfectly matches the type expected by react-hook-form.
+  // --- MODIFIED: Submission logic to handle multiple files ---
   const handleFormSubmit: SubmitHandler<TProductFormSchema> = (data) => {
     const formData = new FormData();
     formData.append('name', data.name);
     formData.append('brand', data.brand);
     formData.append('description', data.description);
     formData.append('price', String(data.price));
-    formData.append('variants', JSON.stringify(data.variants));
-    if (data.image && data.image[0]) {
-      formData.append('image', data.image[0]);
-    }
+
+    const variantsForBackend: any[] = [];
+    data.variants.forEach((variant, index) => {
+      // If there's a file, it's a new image. Append it to FormData.
+      if (variant.image && variant.image[0]) {
+        formData.append('variantImages', variant.image[0]);
+        // Don't send the file object in the JSON
+        variantsForBackend.push({
+          size: variant.size,
+          color: variant.color,
+          stock: variant.stock,
+        });
+      } else if (variant.imageUrl) {
+        // If there's an imageUrl, it's an existing variant. Keep the URL.
+        variantsForBackend.push({
+          id: variant.id,
+          size: variant.size,
+          color: variant.color,
+          stock: variant.stock,
+          imageUrl: variant.imageUrl,
+        });
+      }
+    });
+
+    formData.append('variants', JSON.stringify(variantsForBackend));
     onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {/* Form fields remain the same, but will now work correctly */}
+      {/* Product Name, Brand, Price, Description fields (No Changes) */}
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Product Name</label>
@@ -103,21 +122,17 @@ export const ProductForm = ({
           />
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
         </div>
-        <div>
-          <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-            Product Image {initialData ? '(Leave blank to keep existing image)' : ''}
-          </label>
-          <Input id="image" type="file" {...register('image')} className="mt-1" />
-          {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image.message as string}</p>}
-        </div>
       </div>
+
+      {/* --- MODIFIED: Variants section with image upload --- */}
       <div>
         <h3 className="text-lg font-medium">Variants</h3>
         {errors.variants?.root && <p className="mt-1 text-sm text-red-600">{errors.variants.root.message}</p>}
         <div className="mt-4 space-y-4">
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-start gap-4 rounded-md border p-4">
-              <div className="grid flex-1 grid-cols-3 gap-4">
+              <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-4">
+                {/* Size, Color, Stock Inputs */}
                 <div>
                   <label className="text-xs font-medium">Size</label>
                   <Input {...register(`variants.${index}.size`)} />
@@ -132,6 +147,12 @@ export const ProductForm = ({
                   <label className="text-xs font-medium">Stock</label>
                   <Input type="number" {...register(`variants.${index}.stock`)} />
                   {errors.variants?.[index]?.stock && <p className="text-xs text-red-600">{errors.variants?.[index]?.stock?.message}</p>}
+                </div>
+                {/* Image Input */}
+                <div>
+                  <label className="text-xs font-medium">Image</label>
+                  <Input type="file" {...register(`variants.${index}.image`)} />
+                  {field.imageUrl && <span className="text-xs text-gray-500">Current image saved. Upload to replace.</span>}
                 </div>
               </div>
               <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="mt-5">

@@ -10,18 +10,17 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onQuickAdd }: ProductCardProps) => {
-  // This event handler is now simplified as it's on a button outside the link
   const handleQuickAddClick = (e: React.MouseEvent) => {
-    // Stop the event from bubbling up, just in case.
-    e.stopPropagation(); 
+    e.stopPropagation();
     e.preventDefault();
     onQuickAdd(product.id);
   };
 
+  // --- MODIFIED: Get image from the first variant, with a fallback ---
+  const displayImageUrl = product.variants[0]?.imageUrl || '/placeholder.png';
+
   return (
     <div className="group relative">
-      {/* The Quick Add button is now a sibling to the Link, not a child. */}
-      {/* This ensures its click event is independent. */}
       <motion.div
         className="absolute right-4 top-4 z-20 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
       >
@@ -36,7 +35,6 @@ export const ProductCard = ({ product, onQuickAdd }: ProductCardProps) => {
         </Button>
       </motion.div>
       
-      {/* The Link now correctly wraps only the elements that should navigate */}
       <Link to={`/product/${product.id}`}>
         <motion.div
           whileHover={{ y: -8 }}
@@ -45,14 +43,13 @@ export const ProductCard = ({ product, onQuickAdd }: ProductCardProps) => {
         >
           <div className="aspect-square w-full bg-gray-100">
             <img
-              src={product.imageUrl}
+              src={displayImageUrl} // <-- MODIFIED
               alt={product.name}
               className="h-full w-full object-contain object-center p-4 transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         </motion.div>
 
-        {/* Text Content is now also inside the link */}
         <div className="mt-4 text-left">
           <h3 className="text-sm font-medium text-gray-800">
             {product.name}

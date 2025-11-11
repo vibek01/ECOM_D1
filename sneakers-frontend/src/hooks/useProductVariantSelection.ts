@@ -11,15 +11,13 @@ export const useProductVariantSelection = (product: Product | null) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   useEffect(() => {
-    if (product?.variants) {
-      const defaultVariant = product.variants.find(v => v.stock > 0) || product.variants[0] || null;
-      if (defaultVariant) {
-        setSelectedSize(defaultVariant.size);
-        setSelectedColor(defaultVariant.color);
-      } else {
-        setSelectedSize(null);
-        setSelectedColor(null);
-      }
+    if (product?.variants && product.variants.length > 0) {
+      const defaultVariant = product.variants.find(v => v.stock > 0) || product.variants[0];
+      setSelectedSize(defaultVariant.size);
+      setSelectedColor(defaultVariant.color);
+    } else {
+      setSelectedSize(null);
+      setSelectedColor(null);
     }
   }, [product]);
 
@@ -30,11 +28,9 @@ export const useProductVariantSelection = (product: Product | null) => {
     return product.variants.find(v => v.size === selectedSize && v.color === selectedColor) || null;
   }, [product, selectedSize, selectedColor]);
 
-  // --- DEFINITIVE FIX ---
-  // Reverted to use 'id' which is what the backend is providing.
   const compositeId = useMemo<string | null>(() => {
     if (product && selectedVariant) {
-      return `${product.id}-${selectedVariant.id}`; // REVERTED: back to '.id'
+      return `${product.id}-${selectedVariant.id}`;
     }
     return null;
   }, [product, selectedVariant]);
@@ -57,10 +53,10 @@ export const useProductVariantSelection = (product: Product | null) => {
     if (product && selectedVariant && compositeId) {
       const itemToAdd: CartItemType = {
         id: compositeId,
-        productId: product.id, // REVERTED: back to '.id'
+        productId: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imageUrl,
+        imageUrl: selectedVariant.imageUrl, // <-- MODIFIED: Use the variant's specific image
         size: selectedVariant.size,
         color: selectedVariant.color,
         quantity: 1,

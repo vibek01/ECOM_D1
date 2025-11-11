@@ -1,39 +1,40 @@
-// Represents a single variant of a product.
+// No changes to User or CartItem
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+}
+
 export interface ProductVariant {
-  id: string; // REVERTED: back to 'id'
+  id: string;
   size: string;
   color: string;
   stock: number;
+  imageUrl: string; // <-- ADDED
 }
 
-// Represents the main product.
 export interface Product {
-  id: string; // REVERTED: back to 'id'
+  id: string;
   name: string;
-  brand?: string;
-  description?: string;
+  brand: string;
+  description: string;
   price: number;
-  imageUrl: string;
+  // imageUrl: string; // <-- This is now gone from the backend response
   variants: ProductVariant[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Represents an item in the shopping cart.
 export interface CartItem {
-  id: string; // This is the composite key, e.g., "productId-variantId"
-  productId: string; // This will be the product's id
+  id: string; // Composite ID: `${productId}-${variantId}`
+  productId: string;
   name: string;
   price: number;
-  imageUrl: string;
+  imageUrl: string; // This will now be the specific variant's image URL
   size: string;
   color: string;
   quantity: number;
   stock: number;
-}
-
-// Represents the authenticated user.
-export interface User {
-  _id: string; // User model might still use _id if not transformed, adjust if needed
-  username: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
 }
