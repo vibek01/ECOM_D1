@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAllProducts, getProductById } from '../api/ProductApi';
+import { getAllProducts, getProductById, type ProductFilters } from '../api/ProductApi';
 import type { Product } from '../types';
 
 interface ProductState {
@@ -16,17 +16,19 @@ const initialState: ProductState = {
   error: null,
 };
 
-// Async thunk for fetching all products
-export const fetchProducts = createAsyncThunk('products/fetchProducts', async (_, { rejectWithValue }) => {
-  try {
-    const products = await getAllProducts();
-    return products;
-  } catch (error: any) {
-    return rejectWithValue(error.toString());
+// --- MODIFIED: Thunk now accepts filters ---
+export const fetchProducts = createAsyncThunk(
+  'products/fetchProducts',
+  async (filters: ProductFilters | undefined, { rejectWithValue }) => {
+    try {
+      const products = await getAllProducts(filters);
+      return products;
+    } catch (error: any) {
+      return rejectWithValue(error.toString());
+    }
   }
-});
+);
 
-// Async thunk for fetching a single product by ID
 export const fetchProductById = createAsyncThunk('products/fetchProductById', async (id: string, { rejectWithValue }) => {
   try {
     const product = await getProductById(id);
@@ -42,7 +44,6 @@ const productSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Handling for fetching all products
       .addCase(fetchProducts.pending, (state) => {
         state.status = 'loading';
       })
@@ -54,10 +55,9 @@ const productSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       })
-      // Handling for fetching a single product
       .addCase(fetchProductById.pending, (state) => {
         state.status = 'loading';
-        state.currentProduct = null; // Clear previous product
+        state.currentProduct = null;
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.status = 'succeeded';
