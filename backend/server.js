@@ -9,6 +9,7 @@ import { errorHandler } from './src/middlewares/error.middleware.js';
 // Import Routers
 import productRouter from './src/routes/product.routes.js';
 import authRouter from './src/routes/auth.routes.js';
+import orderRouter from './src/routes/order.routes.js'; // <-- ADD THIS LINE
 
 // Load environment variables
 dotenv.config({
@@ -25,12 +26,10 @@ connectDB();
 configureCloudinary();
 
 // Middlewares
-// --- THIS IS THE REQUIRED CHANGE ---
 app.use(cors({
-  origin: process.env.CORS_ORIGIN, // Ensure this is your frontend URL in .env
-  credentials: true,             // This line is crucial
+  origin: process.env.CORS_ORIGIN,
+  credentials: true,
 }));
-// ---------------------------------
 
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
@@ -39,6 +38,7 @@ app.use(cookieParser());
 // --- API Routes ---
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/orders', orderRouter); // <-- AND ADD THIS LINE
 
 // Simple route for testing
 app.get('/', (req, res) => {
