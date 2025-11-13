@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { LayoutDashboard, Package, Users, LogOut, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, Users, LogOut, Zap, ShoppingCart } from 'lucide-react';
 import { Button } from '../common/Button';
 import { logoutUser } from '../../store/authSlice';
 import type { AppDispatch, RootState } from '../../store/store';
@@ -19,6 +19,7 @@ const AdminSidebar = () => {
   const navLinks = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/products', icon: Package, label: 'Products' },
+    { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/admin/users', icon: Users, label: 'Users' },
   ];
 
@@ -30,7 +31,6 @@ const AdminSidebar = () => {
   return (
     <aside className="flex w-64 flex-col border-r bg-slate-50">
       <div className="flex h-16 items-center border-b px-6">
-        {/* --- FIX: Changed the link from "/" to "/admin/dashboard" --- */}
         <NavLink to="/admin/dashboard" className="flex items-center gap-2 font-semibold">
           <Zap className="h-6 w-6 text-slate-900" />
           <span>Sneakers Admin</span>
