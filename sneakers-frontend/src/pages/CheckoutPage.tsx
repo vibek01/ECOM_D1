@@ -25,11 +25,16 @@ type TShippingSchema = z.infer<typeof ShippingSchema>;
 export const CheckoutPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { items: cartItems, subtotal } = useSelector((state: RootState) => ({
-    items: state.cart.items,
-    subtotal: state.cart.items.reduce((total, item) => total + item.price * item.quantity, 0),
-  }));
+
+  // --- FIX START ---
+  // We now select each piece of state individually to prevent unnecessary re-renders.
+  const cartItems = useSelector((state: RootState) => state.cart.items);
   const { status, error } = useSelector((state: RootState) => state.orders);
+
+  // The subtotal is now calculated here. This is efficient because this calculation
+  // will only re-run if `cartItems` has actually changed, causing a re-render.
+  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  // --- FIX END ---
 
   const {
     register,
