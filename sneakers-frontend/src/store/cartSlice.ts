@@ -35,12 +35,15 @@ const cartSlice = createSlice({
       if (item && item.quantity > 1) {
         item.quantity--;
       } else if (item) {
-        // If quantity is 1, remove the item
         state.items = state.items.filter((i) => i.id !== action.payload);
       }
+    },
+    // --- ADD THIS REDUCER ---
+    clearCart: (state) => {
+      state.items = [];
     },
   },
 });
 
-export const { addItem, removeItem, incrementQuantity, decrementQuantity } = cartSlice.actions;
+export const { addItem, removeItem, incrementQuantity, decrementQuantity, clearCart } = cartSlice.actions; // <-- EXPORT IT
 export default cartSlice.reducer;

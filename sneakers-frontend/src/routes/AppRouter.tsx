@@ -13,8 +13,11 @@ import { RegisterPage } from '../pages/RegisterPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { ProductManagementPage } from '../pages/admin/ProductManagementPage';
 import { AddProductPage } from '../pages/admin/AddProductPage';
-import { EditProductPage } from '../pages/admin/EditProductPage'; // <-- Import
+import { EditProductPage } from '../pages/admin/EditProductPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { CheckoutPage } from '../pages/CheckOutPage'; // <-- IMPORT
+import { OrderConfirmationPage } from '../pages/OrderConfirmationPage'; // <-- IMPORT
+import { OrderManagementPage } from '../pages/admin/OrderManagementPage'; // <-- IMPORT
 
 // --- Import Route Protectors ---
 import { PrivateRoute } from './PrivateRoute';
@@ -32,6 +35,8 @@ export const AppRouter = () => {
           <Route path={ROUTES.CART} element={<CartPage />} />
           <Route element={<PrivateRoute />}>
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/checkout" element={<CheckoutPage />} /> {/* <-- ADD */}
+            <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} /> {/* <-- ADD */}
           </Route>
         </Route>
 
@@ -41,7 +46,8 @@ export const AppRouter = () => {
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/products" element={<ProductManagementPage />} />
             <Route path="/admin/products/add" element={<AddProductPage />} />
-            <Route path="/admin/products/edit/:id" element={<EditProductPage />} /> {/* <-- Add */}
+            <Route path="/admin/products/edit/:id" element={<EditProductPage />} />
+            <Route path="/admin/orders" element={<OrderManagementPage />} /> {/* <-- ADD */}
           </Route>
         </Route>
 

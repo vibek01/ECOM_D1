@@ -20,6 +20,24 @@ export const QuickAddModal = ({ productId, isOpen, onClose }: QuickAddModalProps
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
 
+  // --- FIX START ---
+  // State to hold the currently visible image URL
+  const [displayImage, setDisplayImage] = useState<string | null>(null);
+
+  const {
+    selectedSize,
+    selectedColor,
+    selectedVariant, // We'll use this to get the correct image
+    cartItem,
+    isAddToCartDisabled,
+    handleSizeSelect,
+    handleColorSelect,
+    handleAddToCart,
+    handleIncrement,
+    handleDecrement,
+  } = useProductVariantSelection(product);
+
+  // Effect to fetch product data when the modal opens
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productId) return;
@@ -28,6 +46,10 @@ export const QuickAddModal = ({ productId, isOpen, onClose }: QuickAddModalProps
       try {
         const productData = await getProductById(productId);
         setProduct(productData);
+        // Set the initial display image to the first variant's image
+        if (productData?.variants?.length > 0) {
+          setDisplayImage(productData.variants[0].imageUrl);
+        }
         setStatus('succeeded');
       } catch (err) {
         setStatus('failed');
@@ -38,22 +60,20 @@ export const QuickAddModal = ({ productId, isOpen, onClose }: QuickAddModalProps
     if (isOpen) {
       fetchProduct();
     } else {
+      // Reset state when modal closes
       setStatus('idle');
       setProduct(null);
+      setDisplayImage(null);
     }
   }, [productId, isOpen]);
 
-  const {
-    selectedSize,
-    selectedColor,
-    cartItem,
-    isAddToCartDisabled,
-    handleSizeSelect,
-    handleColorSelect,
-    handleAddToCart,
-    handleIncrement,
-    handleDecrement,
-  } = useProductVariantSelection(product);
+  // Effect to update the display image when the selected variant changes
+  useEffect(() => {
+    if (selectedVariant) {
+      setDisplayImage(selectedVariant.imageUrl);
+    }
+  }, [selectedVariant]);
+  // --- FIX END ---
 
   const renderContent = () => {
     if (status === 'loading' || !product) {
@@ -66,20 +86,30 @@ export const QuickAddModal = ({ productId, isOpen, onClose }: QuickAddModalProps
     return (
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
         <div className="flex items-center justify-center rounded-lg bg-gray-100 p-4">
-          <img src={product.imageUrl} alt={product.name} className="max-h-80 w-full object-contain" />
+          {/* --- MODIFIED: Use AnimatePresence for smooth image transitions --- */}
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={displayImage} // Key change triggers the animation
+              src={displayImage || ''}
+              alt={product.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="max-h-80 w-full object-contain"
+            />
+          </AnimatePresence>
         </div>
         <div className="flex flex-col">
           <h2 className="text-2xl font-bold text-gray-900">{product.name}</h2>
           <p className="mt-2 text-2xl font-medium text-gray-900">${product.price.toFixed(2)}</p>
           <div className="mt-4 space-y-4">
-            {/* --- CORRECTED --- */}
             <VariantSelector
               variants={product.variants}
               type="size"
               selectedValue={selectedSize}
               onValueSelect={handleSizeSelect}
             />
-            {/* --- CORRECTED --- */}
             <VariantSelector
               variants={product.variants}
               type="color"

@@ -38,3 +38,42 @@ export interface CartItem {
   quantity: number;
   stock: number;
 }
+
+// Add these new types to your existing src/types/index.ts file
+
+export interface OrderItem {
+  productId: string;
+  variantId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size: string;
+  color: string;
+  imageUrl: string;
+}
+
+export interface ShippingAddress {
+  fullName: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PaymentDetails {
+  paymentId?: string;
+  paymentStatus?: string;
+}
+
+export interface Order {
+  id: string;
+  user: string | { username: string; email: string }; // User might be populated
+  items: OrderItem[];
+  shippingAddress: ShippingAddress;
+  totalAmount: number;
+  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  paymentDetails: PaymentDetails;
+  trackingNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
