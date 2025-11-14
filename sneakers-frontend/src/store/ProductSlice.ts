@@ -1,12 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getAllProducts, getProductById, type ProductFilters } from '../api/ProductApi';
-import type { Product } from '../types';
+import type { Product, Pagination } from '../types'; // <-- Import Pagination
 
 interface ProductState {
   products: Product[];
   currentProduct: Product | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
+  // --- ADD THIS ---
+  pagination: Pagination | null;
 }
 
 const initialState: ProductState = {
@@ -14,15 +16,16 @@ const initialState: ProductState = {
   currentProduct: null,
   status: 'idle',
   error: null,
+  // --- ADD THIS ---
+  pagination: null,
 };
 
-// --- MODIFIED: Thunk now accepts filters ---
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (filters: ProductFilters | undefined, { rejectWithValue }) => {
     try {
-      const products = await getAllProducts(filters);
-      return products;
+      const response = await getAllProducts(filters);
+      return response; // The API now returns { products, pagination }
     } catch (error: any) {
       return rejectWithValue(error.toString());
     }
@@ -49,12 +52,15 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.products = action.payload;
+        // --- MODIFIED: Store both products and pagination data ---
+        state.products = action.payload.products;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
       })
+      // ... (fetchProductById reducers remain the same)
       .addCase(fetchProductById.pending, (state) => {
         state.status = 'loading';
         state.currentProduct = null;

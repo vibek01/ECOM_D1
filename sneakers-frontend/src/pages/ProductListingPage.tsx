@@ -14,6 +14,7 @@ import { ProductToolbar } from '../components/ui/ProductToolbar';
 import { FilterPanel } from '../components/ui/FilterPanel';
 import { ProductListItem } from '../components/ui/ProductListItem';
 import type { ProductFilters } from '../api/ProductApi';
+import { PaginationControls } from '../components/common/PaginationControls'; // <-- IMPORT
 
 const ProductCardSkeleton = () => (
   <div className="animate-pulse">
@@ -28,15 +29,17 @@ type SortKey = 'relevance' | 'priceAsc' | 'priceDesc' | 'nameAsc' | 'nameDesc';
 
 export const ProductListingPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { products, status, error } = useSelector((s: RootState) => s.products);
+  // --- MODIFIED: Select pagination data as well ---
+  const { products, status, error, pagination } = useSelector((s: RootState) => s.products);
   
-  // State for UI components
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
+  
+  // --- NEW: State for the current page ---
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // --- MODIFIED: Centralized filter state ---
   const [filters, setFilters] = useState<ProductFilters>({
     search: '',
     sort: 'relevance',
@@ -45,40 +48,38 @@ export const ProductListingPage = () => {
   });
   const [debouncedSearch] = useDebounce(filters.search, 300);
 
-  // --- MODIFIED: Fetching logic is now in useEffect ---
   useEffect(() => {
-    // We create a separate object for the API call to include the debounced search term
     const apiFilters = {
       ...filters,
       search: debouncedSearch,
+      page: currentPage, // <-- Pass the current page to the API call
+      limit: 12,
     };
     dispatch(fetchProducts(apiFilters));
-  }, [dispatch, debouncedSearch, filters.sort, filters.brand, filters.color]);
+  }, [dispatch, debouncedSearch, filters.sort, filters.brand, filters.color, currentPage]); // <-- Add currentPage as a dependency
 
-  // Handlers for UI components
+  // --- NEW: When filters change, reset to page 1 ---
+  const handleFilterChange = (newFilters: Partial<ProductFilters>) => {
+    setCurrentPage(1); // Reset page to 1
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+  const handleSearchChange = (query: string) => handleFilterChange({ search: query });
+  const handleSortChange = (sort: SortKey) => handleFilterChange({ sort });
+  const handleApplyFilters = useCallback((appliedFilters: { brand?: string[], color?: string[] }) => {
+    handleFilterChange({
+      brand: appliedFilters.brand?.join(','),
+      color: appliedFilters.color?.join(','),
+    });
+  }, []);
+
   const handleOpenModal = (productId: string) => {
     setSelectedProductId(productId);
     setIsModalOpen(true);
   };
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleSearchChange = (query: string) => {
-    setFilters(prev => ({ ...prev, search: query }));
-  };
-
-  const handleSortChange = (sort: SortKey) => {
-    setFilters(prev => ({ ...prev, sort }));
-  };
-
-  const handleApplyFilters = useCallback((appliedFilters: { brand?: string[], color?: string[] }) => {
-    setFilters(prev => ({
-      ...prev,
-      brand: appliedFilters.brand?.join(','),
-      color: appliedFilters.color?.join(','),
-    }));
-  }, []);
-
-  // --- MODIFIED: Dynamically get available filter options from all products (fetched once) ---
+  // ... (useMemo for availableBrands/Colors remains the same)
   const { availableBrands, availableColors } = useMemo(() => {
     const brands = new Set<string>();
     const colors = new Set<string>();
@@ -92,21 +93,15 @@ export const ProductListingPage = () => {
     };
   }, [products]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
   const renderContent = () => {
-    if (status === 'loading') {
+    // Show skeleton only on the very first load
+    if (status === 'loading' && pagination === null) {
       return (
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+          {Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       );
     }
@@ -198,6 +193,15 @@ export const ProductListingPage = () => {
                 </AnimatePresence>
               </LayoutGroup>
             </div>
+
+            {/* --- NEW: Render the pagination controls --- */}
+            {pagination && (
+              <PaginationControls 
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            )}
           </div>
         </AppContainer>
       </div>
