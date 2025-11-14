@@ -12,16 +12,15 @@ export interface ProductVariant {
   size: string;
   color: string;
   stock: number;
-  imageUrl: string; // <-- ADDED
+  imageUrl: string;
 }
 
 export interface Product {
-  id: string;
+  id:string;
   name: string;
   brand: string;
   description: string;
   price: number;
-  // imageUrl: string; // <-- This is now gone from the backend response
   variants: ProductVariant[];
   createdAt: string;
   updatedAt: string;
@@ -32,14 +31,12 @@ export interface CartItem {
   productId: string;
   name: string;
   price: number;
-  imageUrl: string; // This will now be the specific variant's image URL
+  imageUrl: string;
   size: string;
   color: string;
   quantity: number;
   stock: number;
 }
-
-// Add these new types to your existing src/types/index.ts file
 
 export interface OrderItem {
   productId: string;
@@ -76,4 +73,13 @@ export interface Order {
   trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// --- THIS IS THE MISSING PIECE ---
+// Add this interface to define the shape of the pagination data
+export interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalProducts: number;
+  limit: number;
 }
