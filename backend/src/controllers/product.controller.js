@@ -5,67 +5,62 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../services/cloudinary.service.js';
 
-// --- MODIFIED: getAllProducts now handles filtering, sorting, and searching ---
+// --- MODIFIED: This function now includes pagination logic ---
 const getAllProducts = asyncHandler(async (req, res) => {
   const { search, brand, color, size, minPrice, maxPrice, sort } = req.query;
 
-  // --- Build the MongoDB Query Object ---
-  const query = {};
+  // Pagination parameters from the query string
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 12; // Default to 12 products per page
+  const skip = (page - 1) * limit;
 
+  // Build the MongoDB Query Object for filtering
+  const query = {};
   if (search) {
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
       { brand: { $regex: search, $options: 'i' } },
     ];
   }
-
-  if (brand) {
-    // Assumes brands are comma-separated in the query string (e.g., ?brand=NIKE,Adidas)
-    query.brand = { $in: brand.split(',') };
-  }
-
-  if (color) {
-    query['variants.color'] = { $in: color.split(',') };
-  }
-  
-  if (size) {
-    query['variants.size'] = { $in: size.split(',') };
-  }
-
+  if (brand) query.brand = { $in: brand.split(',') };
+  if (color) query['variants.color'] = { $in: color.split(',') };
+  if (size) query['variants.size'] = { $in: size.split(',') };
   if (minPrice || maxPrice) {
     query.price = {};
-    if (minPrice) {
-      query.price.$gte = Number(minPrice);
-    }
-    if (maxPrice) {
-      query.price.$lte = Number(maxPrice);
-    }
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
   }
   
-  // --- Build the Sort Object ---
+  // Build the Sort Object
   let sortOptions = {};
   switch (sort) {
-    case 'priceAsc':
-      sortOptions = { price: 1 };
-      break;
-    case 'priceDesc':
-      sortOptions = { price: -1 };
-      break;
-    case 'nameAsc':
-      sortOptions = { name: 1 };
-      break;
-    case 'nameDesc':
-      sortOptions = { name: -1 };
-      break;
-    default:
-      // Default sort (e.g., by creation date or relevance)
-      sortOptions = { createdAt: -1 };
-      break;
+    case 'priceAsc': sortOptions = { price: 1 }; break;
+    case 'priceDesc': sortOptions = { price: -1 }; break;
+    case 'nameAsc': sortOptions = { name: 1 }; break;
+    case 'nameDesc': sortOptions = { name: -1 }; break;
+    default: sortOptions = { createdAt: -1 }; break;
   }
 
-  const products = await Product.find(query).sort(sortOptions);
+  // Execute two queries in parallel: one for the paginated data, one for the total count
+  const [products, totalProducts] = await Promise.all([
+    Product.find(query).sort(sortOptions).skip(skip).limit(limit),
+    Product.countDocuments(query)
+  ]);
+
+  const totalPages = Math.ceil(totalProducts / limit);
+
+  // Structure the response to include both the product data and pagination metadata
+  const response = {
+    products,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalProducts,
+      limit,
+    }
+  };
   
-  return res.status(200).json(new ApiResponse(200, products, 'Products fetched successfully'));
+  return res.status(200).json(new ApiResponse(200, response, 'Products fetched successfully'));
 });
 
 
@@ -78,7 +73,7 @@ const getProductById = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, product, 'Product fetched successfully'));
 });
 
-// --- ADMIN CONTROLLERS (No Changes) ---
+// --- ADMIN CONTROLLERS (Unchanged) ---
 const createProduct = asyncHandler(async (req, res) => {
   const { name, brand, description, price } = req.body;
   const variants = JSON.parse(req.body.variants || '[]');
