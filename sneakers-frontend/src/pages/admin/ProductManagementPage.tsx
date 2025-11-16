@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// FIX: Removed unused 'MoreHorizontal' import
 import { Plus, Trash2, Edit } from 'lucide-react';
 import apiPrivate from '../../api/axios';
 import type { Product } from '../../types';
@@ -16,11 +15,20 @@ export const ProductManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  // Note: For simplicity, this admin page fetches all products without pagination.
+  // For a large number of products, pagination could be added here as well.
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await apiPrivate.get('/products');
-      setProducts(response.data.data);
+      // We pass a high limit to fetch all products for the admin view.
+      // A more advanced implementation could add pagination to this page too.
+      const response = await apiPrivate.get('/products?limit=1000');
+      
+      // --- FIX: The API now returns an object { products, pagination }. ---
+      // We need to access the .products property from the response data.
+      setProducts(response.data.data.products);
+      // --- END FIX ---
+
     } catch (err) {
       setError('Failed to fetch products.');
     } finally {
@@ -45,9 +53,8 @@ export const ProductManagementPage = () => {
   const handleDeleteProduct = async () => {
     if (!productToDelete) return;
     try {
-      // Because of the backend fix, productToDelete.id will now be a valid string
       await apiPrivate.delete(`/products/${productToDelete.id}`);
-      fetchProducts();
+      fetchProducts(); // Re-fetch the list to show the updated state
     } catch (err) {
       setError('Failed to delete product.');
     } finally {
@@ -111,7 +118,6 @@ export const ProductManagementPage = () => {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${product.price.toFixed(2)}</td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
-                          {/* Because of the backend fix, product.id will now be a valid string */}
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
                             <Edit className="h-4 w-4" />
                           </Button>
