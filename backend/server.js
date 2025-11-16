@@ -9,7 +9,8 @@ import { errorHandler } from './src/middlewares/error.middleware.js';
 // Import Routers
 import productRouter from './src/routes/product.routes.js';
 import authRouter from './src/routes/auth.routes.js';
-import orderRouter from './src/routes/order.routes.js'; // <-- ADD THIS LINE
+import orderRouter from './src/routes/order.routes.js';
+import adminRouter from './src/routes/admin.routes.js'; // <-- ADD THIS LINE
 
 // Load environment variables
 dotenv.config({
@@ -38,7 +39,8 @@ app.use(cookieParser());
 // --- API Routes ---
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/orders', orderRouter); // <-- AND ADD THIS LINE
+app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/admin', adminRouter); // <-- AND ADD THIS LINE
 
 // Simple route for testing
 app.get('/', (req, res) => {
